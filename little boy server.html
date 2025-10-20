@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>little boy game</title>
+    <style>
+      /* 基本重置 */
+      * { margin:0; padding:0; box-sizing:border-box; font-family: Arial, Helvetica, sans-serif; }
+      body { background:#071428; color:#fff; line-height:1.5; }
+
+      /* 导航 / 顶部 */
+      .top-nav { background:#0d6efd; height:60px; display:flex; align-items:center; padding:0 20px; }
+      .logo { display:flex; gap:10px; align-items:center; }
+      .logo span { color:#fff; font-weight:700; }
+
+      /* 简单的颜色类（页面中有引用） */
+      .green { color:#66b0ff; } /* 原 .green 改为蓝色调 */
+      .qblue { color:#9be7ff; }
+
+      /* 快速链接条 */
+      .th { background:#0b3a66; display:flex; gap:12px; padding:10px; align-items:center; }
+      .th2 {
+        background:#29a3ff;
+        color:#01203a;
+        border:none;
+        padding:6px 12px;
+        height:30px;
+        border-radius:6px;
+        cursor:pointer;
+        text-decoration:none;
+      }
+
+      /* 布局容器 / 区块 */
+      .container { max-width:1100px; margin:0 auto; padding:30px 16px; }
+      .section { padding:60px 0; position:relative; }
+
+      /* 标题 */
+      .section-title { font-size:2.4rem; font-weight:800; text-align:center; margin-bottom:10px; color:#fff; }
+      .section-title span { color:#A7E6FF; display:inline-block; }
+      .section-title-bg {
+        position:absolute; top:50%; left:50%;
+        transform:translate(-50%,-50%);
+        font-size:6rem; font-weight:900; opacity:0.04; pointer-events:none; white-space:nowrap;
+      }
+      .section-subtitle { text-align:center; color:rgba(255,255,255,0.8); max-width:800px; margin:12px auto 30px; }
+
+      /* 特性卡片网格（features） */
+      .features-grid {
+        display:grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+        gap:20px;
+        align-items:start;
+      }
+      .feature-card {
+        background:rgba(6,30,60,0.6);
+        border-radius:12px;
+        padding:22px;
+        border:1px solid rgba(173,216,255,0.06);
+      }
+      .glass-card { /* 保留被 HTML 引用的类名 */ }
+
+      .feature-icon-wrapper {
+        width:72px; height:72px; margin:0 auto 16px;
+        background:linear-gradient(135deg,#3a8af0,#1e90ff);
+        display:flex; align-items:center; justify-content:center; border-radius:12px;
+      }
+      .feature-icon { color:#fff; font-size:22px; }
+
+      .feature-title { text-align:center; color:#A7E6FF; font-weight:700; margin:10px 0; }
+      .feature-card p { color:rgba(255,255,255,0.9); font-size:0.98rem; line-height:1.6; }
+
+      /* 页底装饰条（简单保留） */
+      .block-border-1 { position:absolute; left:0; right:0; height:10px; bottom:0;
+        background:repeating-linear-gradient(90deg,#29a3ff 0 16px,#0d6efd 16px 32px); opacity:0.08; pointer-events:none;
+      }
+
+      /* 服务器团队区 */
+      .server-team { padding:60px 0; }
+      .team-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap:18px; }
+      .team-member {
+        background:rgba(6,30,60,0.6);
+        padding:22px; border-radius:10px; text-align:center; border:1px solid rgba(173,216,255,0.06);
+      }
+      .floating { /* 被引用，保留空类以便后续加动画 */ }
+
+      .member-avatar { margin-bottom:14px; display:flex; justify-content:center; }
+      .minecraft-avatar {
+        width:84px; height:84px; background:linear-gradient(135deg,#0d6efd,#66b0ff);
+        display:flex; align-items:center; justify-content:center; border-radius:8px; color:#fff;
+      }
+      .member-name { font-size:1.1rem; margin-bottom:6px; font-weight:700; }
+      .member-role { color:#8ad8ff; margin-bottom:10px; }
+      .member-desc { color:rgba(255,255,255,0.85); font-size:0.95rem; margin-bottom:12px; }
+
+      .member-social { display:flex; gap:8px; justify-content:center; }
+      .social-icon {
+        width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.04);
+        display:flex; align-items:center; justify-content:center; color:#fff; text-decoration:none;
+      }
+      .copy-contact { cursor:pointer; }
+
+      /* 加入按钮（页面使用） */
+      .pixel-btn { display:inline-block; padding:10px 18px; border-radius:6px; text-decoration:none; background:#0d6efd; color:#fff; font-weight:700; }
+      .pixel-btn-green { background:#0d6efd; color:#fff; }
+
+      /* 响应 */
+      @media (max-width:768px){
+        .section-title { font-size:1.6rem; }
+        .section-title-bg { font-size:4rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-nav">
+      <div class="logo">
+        <span>little boy 服务器组</span>
+        <span>我的世界</span>
+      </div>
+    </div>
+
+    <div class="container">
+      <h1 class="green">little boy 服务器组</h1>
+      <h3 class="qblue">介绍</h3>
+      <p class="qblue">little boy 服务器组是little boy通过randmin连接的服务器组（多个服务器）<br>
+        玩家可以通过快捷连接进行游玩。<br>目前拥有的服务器为：生存1服 / 生存2服 / 创造1服<br>
+        由于物理机配置限制，每个服务器都设置了挂机踢出和低玩家加入限制，请谅解。</p>
+
+      <h3>快速链接</h3>
+      <div class="th">
+        <button onclick="window.location.href='https://qm.qq.com/q/UCpbq3ZRmk'" class="th2">生存服组快速加群</button>
+        <button onclick="window.location.href='https://qm.qq.com/q/Y1eaybCGAu'" class="th2">创造服组快速加群</button>
+        <button onclick="window.location.href='https://pd.qq.com/s/6zx3j30vn'" class="th2">快速加频道</button>
+        <button onclick="window.location.href='index.html'" class="th2">little boy 主页</button>
+      </div>
+    </div>
+
+    <section id="features" class="section features">
+      <div class="container">
+        <h2 class="section-title">服务器<span>规则与说明</span></h2>
+        <div class="section-title-bg">RULES</div>
+        <p class="section-subtitle">了解我们的服务器规则和相关说明，为所有玩家创造一个公平、友好的游戏环境</p>
+
+        <div class="features-grid">
+          <div class="feature-card glass-card">
+            <div class="feature-icon-wrapper"><i class="feature-icon">⚖️</i></div>
+            <h3 class="feature-title">基本规则</h3>
+            <p>禁止使用任何作弊客户端或模组，禁止恶意攻击服务器，禁止利用游戏漏洞。发现将处理处罚。</p>
+          </div>
+
+          <div class="feature-card glass-card">
+            <div class="feature-icon-wrapper"><i class="feature-icon">💬</i></div>
+            <h3 class="feature-title">聊天规范</h3>
+            <p>禁止发布广告、钓鱼链接和人身攻击，保持友善交流，违规将被禁言处理。</p>
+          </div>
+
+          <div class="feature-card glass-card">
+            <div class="feature-icon-wrapper"><i class="feature-icon">🛡️</i></div>
+            <h3 class="feature-title">领地系统</h3>
+            <p>服务器设有领地保护，玩家可声明领地，领地内建筑和物品受保护。</p>
+          </div>
+
+          <div class="feature-card glass-card">
+            <div class="feature-icon-wrapper"><i class="feature-icon">🏆</i></div>
+            <h3 class="feature-title">活动安排</h3>
+            <p>定期举办活动，参与可获得奖励。关注公告与QQ群通知。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="block-border-1"></div>
+    </section>
+
+    <section id="server-team" class="server-team">
+      <div class="container">
+        <h2 class="section-title">服务器<span>团队</span></h2>
+        <p class="section-subtitle">我们拥有一支专业且富有激情的团队，致力于为所有玩家提供优质游戏体验</p>
+
+        <div class="team-grid">
+          <div class="team-member glass-card floating">
+            <div class="member-avatar">
+              <div class="minecraft-avatar">👑</div>
+            </div>
+            <h3 class="member-name">XianDHP</h3>
+            <div class="member-role">服务器主理人</div>
+            <p class="member-desc">服务器创始人，致力于打造最好的MC社区。</p>
+            <div class="member-social">
+              <a href="javascript:void(0)" class="social-icon copy-contact" data-copy="QQ: 3571038225">QQ</a>
+              <a href="javascript:void(0)" class="social-icon copy-contact" data-copy="微信: XianDHP">WX</a>
+            </div>
+          </div>
+
+          <div class="team-member glass-card floating-slow">
+            <div class="member-avatar">
+              <div class="minecraft-avatar">🛡️</div>
+            </div>
+            <h3 class="member-name">ERGE-RTX4090</h3>
+            <div class="member-role">首席管理员</div>
+            <p class="member-desc">负责维护服务器秩序，处理玩家纠纷。</p>
+            <div class="member-social">
+              <a href="javascript:void(0)" class="social-icon copy-contact" data-copy="QQ群: 817794727">QQ</a>
+            </div>
+          </div>
+
+          <div class="team-member glass-card floating-fast">
+            <div class="member-avatar">
+              <div class="minecraft-avatar">💻</div>
+            </div>
+            <h3 class="member-name">11451419191800</h3>
+            <div class="member-role">管理员</div>
+            <p class="member-desc">负责维护服务器秩序与日常管理。</p>
+            <div class="member-social">
+              <a href="javascript:void(0)" class="social-icon copy-contact" data-copy="unknown">哔哩</a>
+            </div>
+          </div>
+
+          <div class="team-member glass-card floating">
+            <div class="member-avatar">
+              <div class="minecraft-avatar">🔨</div>
+            </div>
+            <h3 class="member-name">114514</h3>
+            <div class="member-role">成员</div>
+            <p class="member-desc">——</p>
+            <div class="member-social">
+              <a href="javascript:void(0)" class="social-icon copy-contact" data-copy="unknown">抖音</a>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align:center; margin-top:28px;">
+          <a href="https://qm.qq.com/q/Gb0mie80Yq" target="_blank" class="pixel-btn pixel-btn-green">加入官方QQ群</a>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
+
