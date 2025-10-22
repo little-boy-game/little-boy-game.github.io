@@ -1,236 +1,949 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>little boy game</title>
-    <style>
-      /* 基本重置 */
-      * { margin:0; padding:0; box-sizing:border-box; font-family: Arial, Helvetica, sans-serif; }
-      body { background:#071428; color:#fff; line-height:1.5; }
+    <head>
+        <meta charset="UTF-8" />
+        <title>little boy game</title>
+        <!-- 添加 Font Awesome（保证图标和 index.html 一致） -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <style>
+            /* 基本重置 */
+            * { margin:0; padding:0; box-sizing:border-box; font-family: Arial, Helvetica, sans-serif; }
+            /* 修复：避免因 overlay/滚动条出现/消失引起页面横向位移 */
+            /* 始终保留纵向滚动条以防页面宽度抖动；禁止横向溢出 */
+            html { overflow-y: scroll; overflow-x: hidden; }
+            body { overflow-x: hidden; }           /* 禁止横向溢出引起的水平滚动（页面左移） */
+            /* -webkit-overflow-scrolling: touch 保持移动端滚动平滑（可选） */
+            body { -webkit-overflow-scrolling: touch; }
+            body { background:#071428; color:#fff; line-height:1.5; }
 
-      /* 导航 / 顶部 */
-      .top-nav { background:#0d6efd; height:60px; display:flex; align-items:center; padding:0 20px; }
-      .logo { display:flex; gap:10px; align-items:center; }
-      .logo span { color:#fff; font-weight:700; }
+            /* 导航 / 顶部 */
+            .top-nav { background:#0d6efd; height:60px; display:flex; align-items:center; padding:0 20px; }
+            .logo { display:flex; gap:10px; align-items:center; }
+            .logo span { color:#fff; font-weight:700; }
 
-      /* 简单的颜色类（页面中有引用） */
-      .green { color:#66b0ff; } /* 原 .green 改为蓝色调 */
-      .qblue { color:#9be7ff; }
+            /* 简单的颜色类（页面中有引用） */
+            .green { color:#66b0ff; } /* 原 .green 改为蓝色调 */
+            .qblue { color:#9be7ff; }
 
-      /* 快速链接条 */
-      .th { background:#0b3a66; display:flex; gap:12px; padding:10px; align-items:center; }
-      .th2 {
-        background:#29a3ff;
-        color:#01203a;
-        border:none;
-        padding:6px 12px;
-        height:30px;
-        border-radius:6px;
-        cursor:pointer;
-        text-decoration:none;
-      }
+            /* 快速链接条 */
+            .th { background:#0b3a66; display:flex; gap:12px; padding:10px; align-items:center; }
+            .th2 {
+                background:#29a3ff;
+                color:#ffffff;
+                border:none;
+                padding:6px 12px;
+                height:30px;
+                border-radius:6px;
+                cursor:pointer;
+                text-decoration:none;
+            }
 
-      /* 布局容器 / 区块 */
-      .container { max-width:1100px; margin:0 auto; padding:30px 16px; }
-      .section { padding:60px 0; position:relative; }
 
-      /* 标题 */
-      .section-title { font-size:2.4rem; font-weight:800; text-align:center; margin-bottom:10px; color:#fff; }
-      .section-title span { color:#A7E6FF; display:inline-block; }
-      .section-title-bg {
-        position:absolute; top:50%; left:50%;
-        transform:translate(-50%,-50%);
-        font-size:6rem; font-weight:900; opacity:0.04; pointer-events:none; white-space:nowrap;
-      }
-      .section-subtitle { text-align:center; color:rgba(255,255,255,0.8); max-width:800px; margin:12px auto 30px; }
+            /* 布局容器 / 区块 */
+            .container { max-width:1100px; margin:0 auto; padding:30px 16px; }
+            .section { padding:60px 0; position:relative; }
 
-      /* 特性卡片网格（features） */
-      .features-grid {
-        display:grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
-        gap:20px;
-        align-items:start;
-      }
-      .feature-card {
-        background:rgba(6,30,60,0.6);
-        border-radius:12px;
-        padding:22px;
-        border:1px solid rgba(173,216,255,0.06);
-      }
-      .glass-card { /* 保留被 HTML 引用的类名 */ }
+            /* 标题 */
+            .section-title { font-size:2.4rem; font-weight:800; text-align:center; margin-bottom:10px; color:#fff; }
+            .section-title span { color:#A7E6FF; display:inline-block; }
+            .section-title-bg {
+                position:absolute; top:50%; left:50%;
+                transform:translate(-50%,-50%);
+                font-size:6rem; font-weight:900; opacity:0.04; pointer-events:none; white-space:nowrap;
+            }
+            .section-subtitle { text-align:center; color:rgba(255,255,255,0.8); max-width:800px; margin:12px auto 30px; }
 
-      .feature-icon-wrapper {
-        width:72px; height:72px; margin:0 auto 16px;
-        background:linear-gradient(135deg,#3a8af0,#1e90ff);
-        display:flex; align-items:center; justify-content:center; border-radius:12px;
-      }
-      .feature-icon { color:#fff; font-size:22px; }
+            /* 特性卡片网格（features） */
+            .features-grid {
+                display:grid;
+                grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+                gap:20px;
+                align-items:start;
+            }
+            .feature-card {
+                background:rgba(6,30,60,0.6);
+                border-radius:12px;
+                padding:22px;
+                border:1px solid rgba(173,216,255,0.06);
+            }
+            .glass-card { /* 保留被 HTML 引用的类名 */ }
 
-      .feature-title { text-align:center; color:#A7E6FF; font-weight:700; margin:10px 0; }
-      .feature-card p { color:rgba(255,255,255,0.9); font-size:0.98rem; line-height:1.6; }
+            .feature-icon-wrapper {
+                width:72px; height:72px; margin:0 auto 16px;
+                background:linear-gradient(135deg,#3a8af0,#1e90ff);
+                display:flex; align-items:center; justify-content:center; border-radius:12px;
+            }
+            .feature-icon { color:#fff; font-size:22px; }
 
-      /* 页底装饰条（简单保留） */
-      .block-border-1 { position:absolute; left:0; right:0; height:10px; bottom:0;
-        background:repeating-linear-gradient(90deg,#29a3ff 0 16px,#0d6efd 16px 32px); opacity:0.08; pointer-events:none;
-      }
+            .feature-title { text-align:center; color:#A7E6FF; font-weight:700; margin:10px 0; }
+            .feature-card p { color:rgba(255,255,255,0.9); font-size:0.98rem; line-height:1.6; }
 
-      /* 服务器团队区 */
-      .server-team { padding:60px 0; }
-      .team-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap:18px; }
-      .team-member {
-        background:rgba(6,30,60,0.6);
-        padding:22px; border-radius:10px; text-align:center; border:1px solid rgba(173,216,255,0.06);
-      }
-      .floating { /* 被引用，保留空类以便后续加动画 */ }
+            /* 页底装饰条（简单保留） */
+            .block-border-1 { position:absolute; left:0; right:0; height:10px; bottom:0;
+                background:repeating-linear-gradient(90deg,#29a3ff 0 16px,#0d6efd 16px 32px); opacity:0.08; pointer-events:none;
+            }
 
-      .member-avatar { margin-bottom:14px; display:flex; justify-content:center; }
-      .minecraft-avatar {
-        width:84px; height:84px; background:linear-gradient(135deg,#0d6efd,#66b0ff);
-        display:flex; align-items:center; justify-content:center; border-radius:8px; color:#fff;
-      }
-      .member-name { font-size:1.1rem; margin-bottom:6px; font-weight:700; }
-      .member-role { color:#8ad8ff; margin-bottom:10px; }
-      .member-desc { color:rgba(255,255,255,0.85); font-size:0.95rem; margin-bottom:12px; }
+            /* 服务器团队区 */
+            .server-team { padding:60px 0; }
+            .team-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap:18px; }
+            .team-member {
+                background:rgba(6,30,60,0.6);
+                padding:22px; border-radius:10px; text-align:center; border:1px solid rgba(173,216,255,0.06);
+            }
+            .floating { /* 被引用，保留空类以便后续加动画 */ }
 
-      .member-social { display:flex; gap:8px; justify-content:center; }
-      .social-icon {
-        width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.04);
-        display:flex; align-items:center; justify-content:center; color:#fff; text-decoration:none;
-      }
-      .copy-contact { cursor:pointer; }
+            .member-avatar { margin-bottom:14px; display:flex; justify-content:center; }
+            .minecraft-avatar {
+                width:84px; height:84px; background:linear-gradient(135deg,#0d6efd,#66b0ff);
+                display:flex; align-items:center; justify-content:center; border-radius:8px; color:#fff;
+            }
+            .member-name { font-size:1.1rem; margin-bottom:6px; font-weight:700; }
+            .member-role { color:#8ad8ff; margin-bottom:10px; }
+            .member-desc { color:rgba(255,255,255,0.85); font-size:0.95rem; margin-bottom:12px; }
 
-      /* 加入按钮（页面使用） */
-      .pixel-btn { display:inline-block; padding:10px 18px; border-radius:6px; text-decoration:none; background:#0d6efd; color:#fff; font-weight:700; }
-      .pixel-btn-green { background:#0d6efd; color:#fff; }
+            .member-social { display:flex; gap:8px; justify-content:center; }
+            .social-icon {
+                width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.04);
+                display:flex; align-items:center; justify-content:center; color:#fff; text-decoration:none;
+            }
+            .copy-contact { cursor:pointer; }
 
-      /* 响应 */
-      @media (max-width:768px){
-        .section-title { font-size:1.6rem; }
-        .section-title-bg { font-size:4rem; }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="top-nav">
-      <div class="logo">
-        <span>little boy 服务器组</span>
-        <span>我的世界</span>
-      </div>
-    </div>
+            /* 加入按钮（页面使用） */
+            .pixel-btn { display:inline-block; padding:10px 18px; border-radius:6px; text-decoration:none; background:#0d6efd; color:#fff; font-weight:700; }
+            .pixel-btn-green { background:#0d6efd; color:#fff; }
 
-    <div class="container">
-      <h1 class="green">little boy 服务器组</h1>
-      <h3 class="qblue">介绍</h3>
-      <p class="qblue">little boy 服务器组是little boy通过randmin连接的服务器组（多个服务器）<br>
-        玩家可以通过快捷连接进行游玩。<br>目前拥有的服务器为：生存1服 / 生存2服 / 创造1服<br>
-        由于物理机配置限制，每个服务器都设置了挂机踢出和低玩家加入限制，请谅解。</p>
+            /* 响应 */
+            @media (max-width:768px){
+                .section-title { font-size:1.6rem; }
+                .section-title-bg { font-size:4rem; }
+            }
 
-      <h3>快速链接</h3>
-      <div class="th">
-        <button onclick="window.location.href='https://qm.qq.com/q/UCpbq3ZRmk'" class="th2">生存服组快速加群</button>
-        <button onclick="window.location.href='https://qm.qq.com/q/Y1eaybCGAu'" class="th2">创造服组快速加群</button>
-        <button onclick="window.location.href='https://pd.qq.com/s/6zx3j30vn'" class="th2">快速加频道</button>
-        <button onclick="window.location.href='index.html'" class="th2">little boy 主页</button>
-      </div>
-    </div>
+            /* 补全：蓝色调 glass-card（统一玻璃卡片样式） */
+            .glass-card {
+                background: rgba(10, 28, 50, 0.55);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                border: 1px solid rgba(167, 230, 255, 0.06); /* 轻微蓝色边框 */
+                border-radius: 12px;
+                padding: 22px;
+                box-shadow: 0 12px 30px rgba(30, 144, 255, 0.08);
+                transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+            }
 
-    <section id="features" class="section features">
-      <div class="container">
-        <h2 class="section-title">服务器<span>规则与说明</span></h2>
-        <div class="section-title-bg">RULES</div>
-        <p class="section-subtitle">了解我们的服务器规则和相关说明，为所有玩家创造一个公平、友好的游戏环境</p>
+            .glass-card:hover {
+                transform: translateY(-6px);
+                box-shadow: 0 20px 50px rgba(30, 144, 255, 0.12);
+                background: rgba(8, 22, 44, 0.62);
+            }
 
-        <div class="features-grid">
-          <div class="feature-card glass-card">
-            <div class="feature-icon-wrapper"><i class="feature-icon">⚖️</i></div>
-            <h3 class="feature-title">基本规则</h3>
-            <p>禁止使用任何作弊客户端或模组，禁止恶意攻击服务器，禁止利用游戏漏洞。发现将处理处罚。</p>
-          </div>
+            /* 补全：floating 动画（及 slow / fast 变体）*/
+            .floating {
+                animation: floatY 6s ease-in-out infinite;
+            }
 
-          <div class="feature-card glass-card">
-            <div class="feature-icon-wrapper"><i class="feature-icon">💬</i></div>
-            <h3 class="feature-title">聊天规范</h3>
-            <p>禁止发布广告、钓鱼链接和人身攻击，保持友善交流，违规将被禁言处理。</p>
-          </div>
+            .floating-slow {
+                animation: floatY 10s ease-in-out infinite;
+            }
 
-          <div class="feature-card glass-card">
-            <div class="feature-icon-wrapper"><i class="feature-icon">🛡️</i></div>
-            <h3 class="feature-title">领地系统</h3>
-            <p>服务器设有领地保护，玩家可声明领地，领地内建筑和物品受保护。</p>
-          </div>
+            .floating-fast {
+                animation: floatY 4s ease-in-out infinite;
+            }
 
-          <div class="feature-card glass-card">
-            <div class="feature-icon-wrapper"><i class="feature-icon">🏆</i></div>
-            <h3 class="feature-title">活动安排</h3>
-            <p>定期举办活动，参与可获得奖励。关注公告与QQ群通知。</p>
-          </div>
+            @keyframes floatY {
+                0% { transform: translateY(0); }
+                50% { transform: translateY(-16px); }
+                100% { transform: translateY(0); }
+            }
+
+            /* 将原先的绿色阴影改为蓝色调 */
+            .feature-card:hover .feature-icon-wrapper {
+                transform: rotate(0deg);
+                box-shadow: 0 12px 30px rgba(41, 163, 255, 0.45);
+            }
+
+            .feature-card:hover .feature-icon {
+                transform: rotate(0deg) scale(1.1);
+            }
+
+            /* 简单样式，保持与页面风格一致 */
+            .server-item {
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                gap:12px;
+            }
+            .server-meta { display:flex; gap:12px; align-items:center; }
+            .server-host { color: #A7E6FF; font-weight:700; }
+            .server-status { min-width:160px; text-align:center; padding:8px 12px; border-radius:8px; background:rgba(255,255,255,0.03); }
+            .server-status.online { background: linear-gradient(90deg,#1ec27f20,#1ec27f30); color:#bfffe3; border:1px solid rgba(46, 204, 113,0.12); }
+            .server-status.offline { background: linear-gradient(90deg,#e74c3c20,#e74c3c30); color:#ffd2d2; border:1px solid rgba(231, 76, 60,0.12); }
+            .server-actions button { margin-left:8px; }
+
+            /* 装饰跳转动画：链接下划线 + 悬停动效 */
+            .footer-links a,
+            .th2,
+            .pixel-btn {
+                position: relative;
+                transition: transform 0.18s ease, box-shadow 0.18s ease;
+            }
+            .footer-links a::after,
+            .th2::after,
+            .pixel-btn::after {
+                content: "";
+                position: absolute;
+                left: 8%;
+                right: 8%;
+                bottom: -6px;
+                height: 3px;
+                border-radius: 3px;
+                background: linear-gradient(90deg, rgba(167,230,255,0.9), rgba(41,163,255,0.9));
+                transform: scaleX(0);
+                transform-origin: left center;
+                transition: transform 260ms cubic-bezier(.2,.8,.2,1);
+                opacity: 0.95;
+            }
+            .footer-links a:hover::after,
+            .th2:hover::after,
+            .pixel-btn:hover::after {
+                transform: scaleX(1);
+            }
+            .footer-links a:hover,
+            .th2:hover,
+            .pixel-btn:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 10px 24px rgba(13,110,253,0.08);
+            }
+
+            /* 小装饰圆点 / 漂浮元素（页面顶部 & 规则区） */
+            .deco-blob {
+                position: absolute;
+                pointer-events: none;
+                filter: blur(18px);
+                opacity: 0.14;
+                transition: transform 0.6s ease, opacity 0.6s ease;
+            }
+            .deco-blob--a {
+                width: 220px;
+                height: 220px;
+                left: -40px;
+                top: 40px;
+                background: radial-gradient(circle at 30% 30%, #29a3ff, #0d6efd 60%);
+                border-radius: 50%;
+            }
+            .deco-blob--b {
+                width: 320px;
+                height: 120px;
+                right: -80px;
+                top: 260px;
+                background: linear-gradient(90deg, rgba(167,230,255,0.2), rgba(30,144,255,0.12));
+                border-radius: 60px;
+            }
+
+            /* 进入视窗时的淡入上移动画 */
+            .animate-in {
+                opacity: 0;
+                transform: translateY(18px) scale(0.995);
+                transition: opacity 520ms ease, transform 520ms cubic-bezier(.2,.9,.25,1);
+            }
+            .animate-in.visible {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+
+            /* feature-card hover 增强（光晕移动） */
+            .feature-card {
+                overflow: hidden;
+                position: relative;
+            }
+            .feature-card::before {
+                content: "";
+                position: absolute;
+                inset: -30% -30%;
+                background: radial-gradient(400px 200px at var(--x, 20%) var(--y, 20%), rgba(41,163,255,0.08), transparent 40%);
+                transition: opacity 350ms ease, transform 350ms ease;
+                opacity: 0.9;
+                pointer-events: none;
+            }
+            .feature-card:hover::before {
+                transform: scale(1.02);
+                opacity: 1;
+            }
+
+            /* back-to-top 渐隐 / 固定出现 */
+            #backToTopBtn {
+                transition: opacity .28s ease, transform .28s ease;
+                opacity: 0.0;
+            }
+            #backToTopBtn.visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            /* 保证响应下样式正常 */
+            @media (max-width:640px) {
+                .deco-blob--a { display:none; }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- 在 body 内增加装饰 DOM（便于动画控制） -->
+        <div class="deco-blob deco-blob--a" id="decoBlobA"></div>
+        <div class="deco-blob deco-blob--b" id="decoBlobB"></div>
+
+        <script>
+            function initCopyContact() {
+                document.querySelectorAll('.copy-contact').forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+
+                        const contactInfo = this.getAttribute('data-copy');
+
+                        const tempInput = document.createElement('input');
+                        tempInput.value = contactInfo;
+                        tempInput.style.position = 'absolute';
+                        tempInput.style.left = '-9999px';
+                        document.body.appendChild(tempInput);
+
+                        tempInput.select();
+                        document.execCommand('copy');
+
+                        document.body.removeChild(tempInput);
+
+                        showNotification(`已复制: ${contactInfo}`, 'success');
+
+                        this.classList.add('copied');
+                        setTimeout(() => {
+                            this.classList.remove('copied');
+                        }, 700);
+                    });
+                });
+            }
+        </script>
+
+        <div class="top-nav">
+            <div class="logo">
+                <span>little boy 服务器组</span>
+                <span>我的世界</span>
+            </div>
         </div>
-      </div>
 
-      <div class="block-border-1"></div>
-    </section>
+        <div class="container">
+            <h1 class="green">little boy 服务器组</h1>
+            <h3 class="qblue">介绍</h3>
+            <p class="qblue">little boy 服务器组是little boy通过randmin连接的服务器组（多个服务器）<br>
+                玩家可以通过快捷连接进行游玩。<br>目前拥有的服务器为：生存1服 / 生存2服 / 创造1服<br>
+                由于物理机配置限制，每个服务器都设置了挂机踢出和低玩家加入限制，请谅解。</p>
 
-    <section id="server-team" class="server-team">
-      <div class="container">
-        <h2 class="section-title">服务器<span>团队</span></h2>
-        <p class="section-subtitle">我们拥有一支专业且富有激情的团队，致力于为所有玩家提供优质游戏体验</p>
-
-        <div class="team-grid">
-          <div class="team-member glass-card floating">
-            <div class="member-avatar">
-              <div class="minecraft-avatar">👑</div>
+            <h3>快速链接</h3>
+            <div class="th">
+                <a href='https://qm.qq.com/q/UCpbq3ZRmk' class="th2">生存服组快速加群</a>
+                <a href='https://qm.qq.com/q/Y1eaybCGAu' class="th2">创造服组快速加群</a>
+                <a href='https://pd.qq.com/s/6zx3j30vn' class="th2">快速加频道</a>
+                <a href='https://qm.qq.com/q/eYjSLdmBcA' class="th2">快速加总群</a>
+                <a href='index.html' class="th2">little boy 主页 </a>
             </div>
-            <h3 class="member-name">XianDHP</h3>
-            <div class="member-role">服务器主理人</div>
-            <p class="member-desc">服务器创始人，致力于打造最好的MC社区。</p>
-            <div class="member-social">
-              <a href="javascript:void(0)" class="social-icon copy-contact" data-copy="QQ: 3571038225">QQ</a>
-              <a href="javascript:void(0)" class="social-icon copy-contact" data-copy="微信: XianDHP">WX</a>
-            </div>
-          </div>
-
-          <div class="team-member glass-card floating-slow">
-            <div class="member-avatar">
-              <div class="minecraft-avatar">🛡️</div>
-            </div>
-            <h3 class="member-name">ERGE-RTX4090</h3>
-            <div class="member-role">首席管理员</div>
-            <p class="member-desc">负责维护服务器秩序，处理玩家纠纷。</p>
-            <div class="member-social">
-              <a href="javascript:void(0)" class="social-icon copy-contact" data-copy="QQ群: 817794727">QQ</a>
-            </div>
-          </div>
-
-          <div class="team-member glass-card floating-fast">
-            <div class="member-avatar">
-              <div class="minecraft-avatar">💻</div>
-            </div>
-            <h3 class="member-name">11451419191800</h3>
-            <div class="member-role">管理员</div>
-            <p class="member-desc">负责维护服务器秩序与日常管理。</p>
-            <div class="member-social">
-              <a href="javascript:void(0)" class="social-icon copy-contact" data-copy="unknown">哔哩</a>
-            </div>
-          </div>
-
-          <div class="team-member glass-card floating">
-            <div class="member-avatar">
-              <div class="minecraft-avatar">🔨</div>
-            </div>
-            <h3 class="member-name">114514</h3>
-            <div class="member-role">成员</div>
-            <p class="member-desc">——</p>
-            <div class="member-social">
-              <a href="javascript:void(0)" class="social-icon copy-contact" data-copy="unknown">抖音</a>
-            </div>
-          </div>
         </div>
 
-        <div style="text-align:center; margin-top:28px;">
-          <a href="https://qm.qq.com/q/Gb0mie80Yq" target="_blank" class="pixel-btn pixel-btn-green">加入官方QQ群</a>
+        <section id="features" class="section features">
+            <div class="container">
+                <h2 class="section-title">服务器<span>规则与说明</span></h2>
+                <div class="section-title-bg">RULES</div>
+                <p class="section-subtitle">了解我们的服务器规则和相关说明，为所有玩家创造一个公平、友好的游戏环境</p>
+
+                <div class="features-grid">
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon-wrapper">
+                            <i class="fas fa-gavel feature-icon"></i>
+                        </div>
+                        <h3 class="feature-title">基本规则</h3>
+                        <p>禁止使用任何作弊客户端或模组，禁止恶意攻击服务器，禁止利用游戏漏洞。发现将处理处罚。</p>
+                    </div>
+
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon-wrapper">
+                            <i class="fas fa-comments feature-icon"></i>
+                        </div>
+                        <h3 class="feature-title">聊天规范</h3>
+                        <p>禁止发布广告、钓鱼链接和人身攻击，保持友善交流，违规将被禁言处理。</p>
+                    </div>
+
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon-wrapper">
+                            <i class="fas fa-solid fa-bug feature-icon"></i>
+                        </div>
+                        <h3 class="feature-title">低错误</h3>
+                        <p>服务器减少了无关紧要或用处小的插件，大大提高了流畅性与错误性。</p>
+                    </div>
+
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon-wrapper">
+                            <i class="fas fa-coins feature-icon"></i>
+                        </div>
+                        <h3 class="feature-title">经济系统</h3>
+                        <p>服务器采用绿宝石作为主要货币，绿宝石可存入服务器银行卡里。完成任务、参与活动、日常在线均可获得金币。</p>
+                    </div>
+
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon-wrapper">
+                            <i class="fas fa-brands fa-qq feature-icon"></i>
+                        </div>
+                        <h3 class="feature-title">QQ主要交流平台</h3>
+                        <p>服务器讨论主要靠QQ群等进行玩家&腐竹间的谈论</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="block-border-1"></div>
+        </section>
+
+        <section id="server-team" class="server-team">
+            <div class="container">
+                <h2 class="section-title">服务器<span>团队</span></h2>
+                <p class="section-subtitle">我们拥有一支专业且富有激情的团队，致力于为所有玩家提供优质游戏体验</p>
+
+                <div class="team-grid">
+                    <div class="team-member glass-card floating">
+                        <div class="member-avatar">
+                            <div class="minecraft-avatar">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                        </div>
+                        <h3 class="member-name">little boy game</h3>
+                        <div class="member-role">服务器主理人</div>
+                        <p class="member-desc">服务器创始人，致力于打造最好的MC社区。</p>
+                        <div class="member-social">
+                            <a href="javascript:void(0)" class="social-icon copy-contact" data-copy="QQ: 84778333"><i class="fab fa-qq"></i></a>
+                            <a href="javascript:void(0)" class="social-icon copy-contact" data-copy="微信: little boy game"><i class="fab fa-weixin"></i></a>
+                        </div>
+                    </div>
+
+                    <div class="team-member glass-card floating-slow">
+                        <div class="member-avatar">
+                            <div class="minecraft-avatar">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                        </div>
+                        <h3 class="member-name">114514</h3>
+                        <div class="member-role">首席管理员</div>
+                        <p class="member-desc">负责维护服务器秩序，处理玩家纠纷。</p>
+                        <div class="member-social">
+                            <a href="javascript:void(0)" class="social-icon copy-contact" data-copy="QQ群:"><i class="fab fa-qq"></i></a>
+                        </div>
+                    </div>
+
+                    <div class="team-member glass-card floating-fast">
+                        <div class="member-avatar">
+                            <div class="minecraft-avatar">
+                                <i class="fas fa-code"></i>
+                            </div>
+                        </div>
+                        <h3 class="member-name">114514</h3>
+                        <div class="member-role">管理员</div>
+                        <p class="member-desc">负责维护服务器秩序与日常管理。</p>
+                        <div class="member-social">
+                            <a href="javascript:void(0)" class="social-icon copy-contact" data-copy="unknown"><i class="fab fa-bilibili"></i></a>
+                        </div>
+                    </div>
+
+                    <div class="team-member glass-card floating">
+                        <div class="member-avatar">
+                            <div class="minecraft-avatar">
+                                <i class="fas fa-hammer"></i>
+                            </div>
+                        </div>
+                        <h3 class="member-name">114514</h3>
+                        <div class="member-role">成员</div>
+                        <p class="member-desc">——</p>
+                        <div class="member-social">
+                            <a href="javascript:void(0)" class="social-icon copy-contact" data-copy="unknown"><i class="fab fa-tiktok"></i></a>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align:center; margin-top:28px;">
+                    <a href="https://qm.qq.com/q/liszCGmeNW" target="_blank" class="pixel-btn pixel-btn-green">加入官方QQ群</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 新增：服务器状态组（可管理多个地址） -->
+        <section id="server-group" class="section">
+            <div class="container">
+                <h2 class="section-title">多服<span>状态查看</span></h2>
+                <div class="section-title-bg">SERVERS</div>
+                <p class="section-subtitle">点击“检查”查看各服实时状态</p>
+
+                <div id="serverGroupControls" style="text-align:center; margin-bottom:12px;">
+                    <button id="checkAllBtn" class="pixel-btn">检查全部服务器</button>
+                    <button id="refreshListBtn" class="pixel-btn pixel-btn-green" style="margin-left:8px;">刷新列表</button>
+                </div>
+
+                <div id="serverGroupList" style="display:grid; gap:14px;"></div>
+
+                <div style="text-align:center; margin-top:18px;">
+                    <small style="color:rgba(228, 4, 4, 0.7)">
+                        由于技术原因，该功能暂时无效
+                    </small>
+                </div>
+            </div>
+        </section>
+
+        <script>
+            // 在这里维护服务器列表：name 显示名，host/port 为连接信息（可添加/删除/修改）
+            // 示例：
+            const SERVER_LIST = [
+                { id: 's1', name: '生存1服', host: '127.0.0.1', port: '25565' },
+                { id: 's2', name: '生存2服', host: '127.0.0.1', port: '25564' },
+                { id: 's3', name: '创造服', host: '127.0.0.1', port: '25563' },
+                // 添加更多：{ id: 'sN', name: '名字', host: '域名或IP', port: '端口' }
+            ];
+
+            // 可选：选择 API 提供者（mcstatus 推荐，支持 IPv6）
+            const SERVER_API_PROVIDER = 'mcapi'; // 'mcstatus' 或 'mcapi'
+
+            function buildApiUrl(host, port) {
+                const hostPort = `${host}:${port}`;
+                const isIPv6 = host.includes(':') && !host.startsWith('[');
+                if (SERVER_API_PROVIDER === 'mcstatus') {
+                    return isIPv6
+                        ? `https://api.mcstatus.io/v2/status/java/[${host}]:${port}`
+                        : `https://api.mcstatus.io/v2/status/java/${host}:${port}`;
+                } else if (SERVER_API_PROVIDER === 'mcapi') {
+                    return `https://api.mc-api.net/v3/server/ping/${hostPort}`;
+                } else if (SERVER_API_PROVIDER === 'mcsrv') {
+                    // mcsrvstat.us 接口只需要主机名（端口默认检测），不要用 host:port 路径
+                    return `https://api.mcsrvstat.us/2/${host}`;
+                } else {
+                    return `https://api.mcstatus.io/v2/status/java/${hostPort}`;
+                }
+            }
+
+            // 渲染服务器列表（修复：之前未定义导致联机组不显示）
+            function renderServerList() {
+                const listEl = document.getElementById('serverGroupList');
+                if (!listEl) return;
+                listEl.innerHTML = '';
+
+                SERVER_LIST.forEach(s => {
+                    const item = document.createElement('div');
+                    item.className = 'server-item glass-card';
+                    item.style.padding = '12px';
+
+                    const meta = document.createElement('div');
+                    meta.className = 'server-meta';
+                    meta.innerHTML = `<div>
+                                            <div class="server-host">${s.name}</div>
+                                            <div style="color:rgba(255,255,255,0.7);font-size:0.9rem">${s.host}:${s.port}</div>
+                                      </div>`;
+
+                    const status = document.createElement('div');
+                    status.className = 'server-status';
+                    status.id = `status-${s.id}`;
+                    status.textContent = '未检测';
+
+                    const actions = document.createElement('div');
+                    actions.className = 'server-actions';
+                    actions.innerHTML = `<button class="pixel-btn" data-id="${s.id}">检查</button>
+                                         <button class="pixel-btn pixel-btn-green" data-id="${s.id}" style="margin-left:6px;">复制地址</button>`;
+
+                    item.appendChild(meta);
+                    item.appendChild(status);
+                    item.appendChild(actions);
+
+                    listEl.appendChild(item);
+
+                    // 事件绑定（检查 / 复制）
+                    actions.querySelectorAll('button').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const id = btn.getAttribute('data-id');
+                            if (btn.textContent.includes('复制')) {
+                                const server = SERVER_LIST.find(x => x.id === id);
+                                if (server) {
+                                    navigator.clipboard?.writeText(`${server.host}:${server.port}`).then(() => {
+                                        showNotification(`已复制 ${server.host}:${server.port}`, 'success');
+                                    }).catch(()=> { showNotification('复制失败，请手动复制', 'warning'); });
+                                }
+                                return;
+                            }
+                            checkServerById(id);
+                        });
+                    });
+                });
+            }
+
+            async function checkServerById(id) {
+                const server = SERVER_LIST.find(s => s.id === id);
+                if (!server) return;
+                const statusEl = document.getElementById(`status-${id}`);
+                statusEl.textContent = '检测中...';
+                statusEl.className = 'server-status';
+ 
+                const apiUrl = buildApiUrl(server.host, server.port);
+                console.log(`[check] ${server.name} ->`, apiUrl);
+ 
+                try {
+                    const res = await fetch(apiUrl, { cache: 'no-store' });
+                    if (!res.ok) {
+                        console.error('[fetch] 非 2xx 返回', res.status, res.statusText);
+                        statusEl.textContent = `请求失败 (${res.status})`;
+                        statusEl.classList.add('offline');
+                        return;
+                    }
+ 
+                    const data = await res.json();
+                    console.log('[fetch] 返回数据', data);
+ 
+                    // 兼容不同 API 的字段
+                    const online = data?.online ?? data?.status ?? false;
+                    let players = '-';
+                    let max = '-';
+                    let ver = '';
+ 
+                    // mcstatus.io / mc-api.net / mcsrvstat 差异处理
+                    if (data.players) {
+                        players = data.players.online ?? data.players.now ?? data.players?.online ?? '-';
+                        max = data.players.max ?? data.players.max_players ?? data.players?.max ?? '-';
+                    } else if (data.players_online !== undefined) {
+                        players = data.players_online;
+                        max = data.players_max ?? '-';
+                    }
+ 
+                    ver = data.version?.name_clean || data.version?.name || data.version || data.software || '';
+ 
+                    if (online) {
+                        statusEl.textContent = `在线：${players}/${max} · ${ver}`;
+                        statusEl.classList.add('online');
+                    } else {
+                        statusEl.textContent = '离线 / 无响应';
+                        statusEl.classList.add('offline');
+                    }
+                } catch (err) {
+                    console.error('[checkServerById] 错误：', err);
+                    // 常见：TypeError: Failed to fetch -> 通常是 CORS / 网络 / DNS 问题
+                    const isCors = String(err).toLowerCase().includes('cors') || String(err).includes('Failed to fetch');
+                    statusEl.textContent = isCors ? '请求被阻止（CORS/网络）' : '请求失败';
+                    statusEl.classList.add('offline');
+                }
+            }
+ 
+            function checkAllServers() {
+                SERVER_LIST.forEach(s => checkServerById(s.id));
+            }
+ 
+            document.addEventListener('DOMContentLoaded', () => {
+                renderServerList();
+ 
+                document.getElementById('checkAllBtn').addEventListener('click', () => {
+                    checkAllServers();
+                });
+                document.getElementById('refreshListBtn').addEventListener('click', () => {
+                    renderServerList();
+                    showNotification('列表已刷新', 'info');
+                });
+            });
+ 
+            // 使用页面已有的 showNotification 函数；若不存在，做简单替代
+            if (typeof showNotification !== 'function') {
+                function showNotification(msg, type='info') {
+                    alert(msg);
+                }
+            }
+        </script>
+
+        <!-- 添加：页面尾页（Footer） -->
+        <style>
+            .site-footer {
+                background: linear-gradient(180deg, rgba(6,30,60,0.6), rgba(3,18,36,0.8));
+                color: rgba(255,255,255,0.85);
+                padding: 28px 16px;
+                border-top: 1px solid rgba(167,230,255,0.04);
+            }
+            .site-footer .footer-container {
+                max-width:1100px;
+                margin:0 auto;
+                display:flex;
+                gap:18px;
+                align-items:center;
+                justify-content:space-between;
+                flex-wrap:wrap;
+            }
+            .footer-left { display:flex; gap:12px; align-items:center; }
+            .footer-logo { font-weight:800; color:#A7E6FF; font-size:1rem; }
+            .footer-links { display:flex; gap:10px; flex-wrap:wrap; }
+            .footer-links a { color:rgba(167,230,255,0.9); text-decoration:none; padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.02); }
+            .footer-right { display:flex; gap:12px; align-items:center; color:rgba(255,255,255,0.7); font-size:0.95rem; }
+
+            .footer-copy { width:100%; text-align:center; margin-top:12px; color:rgba(255,255,255,0.55); font-size:0.88rem; }
+
+            .back-to-top {
+                appearance:none;
+                border:0;
+                background:#0d6efd;
+                color:#fff;
+                padding:8px 10px;
+                border-radius:6px;
+                cursor:pointer;
+                font-weight:700;
+            }
+
+            @media (max-width:640px){
+                .site-footer .footer-container { flex-direction:column; gap:12px; align-items:center; }
+                .footer-right { font-size:0.85rem; }
+            }
+        </style>
+
+        <footer class="site-footer">
+            <div class="footer-container">
+                <div class="footer-left">
+                    <div class="footer-logo">little boy 服务器组</div>
+                    <div class="footer-links">
+                        <a href="index.html">主页</a>
+                        <a href="#features">规则</a>
+                        <a href="#server-group">多服状态</a>
+                        <a href="https://qm.qq.com/q/liszCGmeNW" target="_blank">官方QQ群</a>
+                    </div>
+                </div>
+
+                <div class="footer-right">
+                    <div>联系: <span style="color:#A7E6FF; font-weight:700;">QQ 84778333</span></div>
+                    <div>当前在线服: <span id="footer-online-count">—</span></div>
+                    <button class="back-to-top" id="backToTopBtn">回到顶部</button>
+                </div>
+
+                <div class="footer-copy">© <span id="footer-year"></span> little boy. 保留所有权利。</div>
+            </div>
+        </footer>
+
+        <script>
+            // 回到顶部与年份、简单在线数统计（使用已有 SERVER_LIST）
+            (function(){
+                // 设置年份
+                const yearEl = document.getElementById('footer-year');
+                if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+                // 回到顶部
+                const btn = document.getElementById('backToTopBtn');
+                if (btn) btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+                // 简单尝试统计在线数量（并不会触发实际 API 请求，只统计已知状态元素显示“在线”时）
+                function updateFooterOnlineCount() {
+                    const list = document.querySelectorAll('.server-status.online');
+                    let totalOnline = 0;
+                    list.forEach(el => {
+                        const text = el.textContent || '';
+                        const m = text.match(/在线：\s*(\d+)\s*\/\s*(\d+)/);
+                        if (m) totalOnline += parseInt(m[1], 10);
+                    });
+                    const out = totalOnline > 0 ? `${totalOnline} 玩家` : '暂无统计';
+                    const el = document.getElementById('footer-online-count');
+                    if (el) el.textContent = out;
+                }
+
+                // 轮询更新 footer 在线数（每 5 秒）
+                setInterval(updateFooterOnlineCount, 5000);
+                // 立即运行一次
+                updateFooterOnlineCount();
+            })();
+        </script>
+
+        <!-- 在文件末尾添加动画初始化脚本 -->
+        <script>
+            // 平滑锚点滚动（适用于内部链接）
+            document.querySelectorAll('a[href^="#"]').forEach(a => {
+                a.addEventListener('click', function (e) {
+                    const targetId = this.getAttribute('href').slice(1);
+                    const el = document.getElementById(targetId);
+                    if (el) {
+                        e.preventDefault();
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        history.replaceState(null, '', `#${targetId}`);
+                    }
+                });
+            });
+
+            // 回到顶部按钮显示控制
+            const backBtn = document.getElementById('backToTopBtn');
+            window.addEventListener('scroll', () => {
+                if (!backBtn) return;
+                if (window.scrollY > 320) backBtn.classList.add('visible');
+                else backBtn.classList.remove('visible');
+            });
+
+            // 视窗进入时触发 animate-in.visible（IntersectionObserver）
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.18 });
+
+            document.querySelectorAll('.feature-card, .team-member, .section-title, .server-item').forEach(el => {
+                el.classList.add('animate-in');
+                io.observe(el);
+            });
+
+            // feature-card 鼠标跟随光斑
+            document.querySelectorAll('.feature-card').forEach(card => {
+                card.addEventListener('mousemove', (ev) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = ((ev.clientX - rect.left) / rect.width) * 100;
+                    const y = ((ev.clientY - rect.top) / rect.height) * 100;
+                    card.style.setProperty('--x', x + '%');
+                    card.style.setProperty('--y', y + '%');
+                });
+            });
+
+            // 装饰 Blob 跟随鼠标做微动（轻量）
+            (function decoFollow() {
+                const a = document.getElementById('decoBlobA');
+                const b = document.getElementById('decoBlobB');
+                if (!a || !b) return;
+                window.addEventListener('mousemove', e => {
+                    const rx = (e.clientX / window.innerWidth - 0.5) * 30;
+                    const ry = (e.clientY / window.innerHeight - 0.5) * 20;
+                    a.style.transform = `translate(${rx}px, ${ry}px)`;
+                    b.style.transform = `translate(${rx * -0.6}px, ${ry * -0.6}px)`;
+                });
+            })();
+
+            // 初始化复制联系方式的控件（如之前实现）
+            if (typeof initCopyContact === 'function') initCopyContact();
+        </script>
+
+        <!-- 页面切换过渡（蓝黑幕斜角滑行 + 中央 logo，点击跳转到主页时触发） -->
+        <style>
+            /* 过渡容器 */
+            .page-swipe {
+                position: fixed;
+                inset: 0;
+                z-index: 99999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                pointer-events: none;
+                will-change: transform, opacity;
+                overflow: hidden; /* 防止子面板超出产生滚动条 */
+            }
+            /* 斜角面板，宽高设大以保证旋转后填满 */
+            .page-swipe .swipe-panel {
+                position: absolute;
+                width: 160%;
+                height: 140%;
+                background: linear-gradient(135deg, #0d6efd 0%, #071428 70%);
+                /* 通过 left/right 控制，避免在某些浏览器触发布局溢出 */
+                left: -30%;
+                transform: translateX(0) rotate(-12deg);
+                border-radius: 22px;
+                transition: transform 700ms cubic-bezier(.2,.9,.25,1), opacity 400ms;
+                box-shadow: 0 40px 90px rgba(5,20,40,0.55);
+                pointer-events: none;
+            }
+            .page-swipe.active .swipe-panel {
+                transform: translateX(0) rotate(-12deg);
+            }
+
+            /* 中央 logo 容器（圆角） */
+            .page-swipe .swipe-logo {
+                position: relative;
+                z-index: 100000;
+                width: 140px;
+                height: 140px;
+                border-radius: 18px;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(255,255,255,0.04);
+                box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+                opacity: 0;
+                transform: scale(0.92);
+                transition: opacity 420ms ease, transform 420ms cubic-bezier(.2,.8,.2,1);
+            }
+            .page-swipe.active .swipe-logo {
+                opacity: 1;
+                transform: scale(1);
+            }
+            .page-swipe .swipe-logo img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display:block;
+            }
+        </style>
+
+        <!-- overlay DOM（初始隐藏） -->
+        <div id="pageSwipe" class="page-swipe" aria-hidden="true" style="display:none">
+            <div class="swipe-panel" aria-hidden="true"></div>
+            <div class="swipe-logo" aria-hidden="true">
+                <!-- 在这里放转场用的 logo 图片 -->
+                <!-- 建议路径： assets/images/transition-logo.png -->
+                <!-- 如果没有图片，可把下面 <img> 的 src 改为你项目中的图片路径 -->
+                <img src="Logo.png" alt="logo">
+            </div>
         </div>
-      </div>
-    </section>
-  </body>
+
+        <script>
+            (function(){
+                const TRANSITION_MS = 800; // 面板滑满屏所需时间，单位 ms
+                const swipeEl = document.getElementById('pageSwipe');
+
+                function ensureVisible() {
+                    if (!swipeEl) return;
+                    swipeEl.style.display = 'flex';
+                }
+                function hideImmediately() {
+                    if (!swipeEl) return;
+                    swipeEl.style.display = 'none';
+                    swipeEl.classList.remove('active');
+                }
+
+                // 播放转场并在结束后跳转
+                async function playTransitionAndNavigate(href) {
+                    if (!swipeEl) {
+                        window.location.href = href;
+                        return;
+                    }
+
+                    ensureVisible();
+                    // 小延时确保样式已应用
+                    requestAnimationFrame(() => {
+                        swipeEl.classList.add('active');
+                        swipeEl.setAttribute('aria-hidden','false');
+                    });
+
+                    // 等待滑满屏（移除切开阶段，直接导航）
+                    await new Promise(r => setTimeout(r, TRANSITION_MS));
+
+                    // 最终导航
+                    window.location.href = href;
+                }
+
+                // 绑定点击至首页或任意需要转场的链接
+                // 规则：带 data-transition="swipe" 的链接会触发转场
+                document.addEventListener('click', (e) => {
+                    const a = e.target.closest('a, button');
+                    if (!a) return;
+                    // 支持 a[href="index.html"] 或 data-transition="swipe"
+                    const href = a.getAttribute('href');
+                    const wants = a.getAttribute('data-transition');
+                    if (wants === 'swipe' || href === 'index.html' || href === './index.html' || href === '/index.html') {
+                        // 仅在同源导航且确认为页面跳转时拦截
+                        if (a.tagName.toLowerCase() === 'a' && href && !href.startsWith('http')) {
+                            e.preventDefault();
+                            playTransitionAndNavigate(href);
+                        }
+                    }
+                });
+
+                // 如果需要在页面加载完后自动播放（例如从子页返回主页），可在此检测 location.state 或 URL 参数
+                // 页面卸载时（防止短暂闪烁）保留 overlay
+                window.addEventListener('pageshow', (ev) => {
+                    // 若需隐藏 overlay（例如后退回本页），确保隐藏
+                    hideImmediately();
+                });
+            })();
+        </script>
+    </body>
 </html>
 
