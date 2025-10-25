@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>北金人民政府</title>
+        <!-- 添加 Font Awesome（保证图标和 index.html 一致） -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <style>
+            /* 基本重置 */
+            * { margin:0; padding:0; box-sizing:border-box; font-family: Arial, Helvetica, sans-serif; }
+            /* 修复：避免因 overlay/滚动条出现/消失引起页面横向位移 */
+            /* 始终保留纵向滚动条以防页面宽度抖动；禁止横向溢出 */
+            html { overflow-y: scroll; overflow-x: hidden; }
+            body { overflow-x: hidden; }           /* 禁止横向溢出引起的水平滚动（页面左移） */
+            /* -webkit-overflow-scrolling: touch 保持移动端滚动平滑（可选） */
+            body { -webkit-overflow-scrolling: touch; }
+            /* 黄色基调背景（深暖色） */
+            body { background:#1b1206; color:#fff; line-height:1.5; }
+
+            /* 导航 / 顶部 */
+            .top-nav { background:#f39c12; height:60px; display:flex; align-items:center; padding:0 20px; }
+            .logo { display:flex; gap:10px; align-items:center; }
+            .logo span { color:#fff; font-weight:700; }
+
+            /* 简单的颜色类（页面中有引用） */
+            .green { color:#f6c84c; } /* 保持类名，改为金黄色 */
+            .qblue { color:#ffd166; } /* 次要高亮改为浅黄 */
+
+            /* 快速链接条 */
+            .th { background:#3a2a10; display:flex; gap:12px; padding:10px; align-items:center; }
+            .th2 {
+                background:#f6c84c;
+                color:#1b1206;
+                border:none;
+                padding:6px 12px;
+                height:30px;
+                border-radius:6px;
+                cursor:pointer;
+                text-decoration:none;
+            }
+
+            /* 布局容器 / 区块 */
+            .container { max-width:1100px; margin:0 auto; padding:30px 16px; }
+            .section { padding:60px 0; position:relative; }
+
+            /* 标题 */
+            .section-title { font-size:2.4rem; font-weight:800; text-align:center; margin-bottom:10px; color:#fff; }
+            .section-title span { color:#ffeaa7; display:inline-block; }
+            .section-title-bg {
+                position:absolute; top:50%; left:50%;
+                transform:translate(-50%,-50%);
+                font-size:6rem; font-weight:900; opacity:0.04; pointer-events:none; white-space:nowrap;
+            }
+            .section-subtitle { text-align:center; color:rgba(255,234,167,0.85); max-width:800px; margin:12px auto 30px; }
+
+            /* 特性卡片网格（features） */
+            .features-grid {
+                display:grid;
+                grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+                gap:20px;
+                align-items:start;
+            }
+            .feature-card {
+                background:rgba(40,20,6,0.55);
+                border-radius:12px;
+                padding:22px;
+                border:1px solid rgba(246,200,76,0.06);
+            }
+            .glass-card { /* 保留被 HTML 引用的类名 */ }
+
+            .feature-icon-wrapper {
+                width:72px; height:72px; margin:0 auto 16px;
+                background:linear-gradient(135deg,#f6c84c,#f39c12);
+                display:flex; align-items:center; justify-content:center; border-radius:12px;
+            }
+            .feature-icon { color:#1b1206; font-size:22px; }
+
+            .feature-title { text-align:center; color:#ffeaa7; font-weight:700; margin:10px 0; }
+            .feature-card p { color:rgba(255,234,167,0.92); font-size:0.98rem; line-height:1.6; }
+
+            /* 页底装饰条（简单保留） */
+            .block-border-1 { position:absolute; left:0; right:0; height:10px; bottom:0;
+                background:repeating-linear-gradient(90deg,#f6c84c 0 16px,#f39c12 16px 32px); opacity:0.06; pointer-events:none;
+            }
+
+            /* 服务器团队区 */
+            .server-team { padding:60px 0; }
+            .team-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap:18px; }
+            .team-member {
+                background:rgba(40,20,6,0.55);
+                padding:22px; border-radius:10px; text-align:center; border:1px solid rgba(246,200,76,0.06);
+            }
+            .floating { /* 被引用，保留空类以便后续加动画 */ }
+
+            .member-avatar { margin-bottom:14px; display:flex; justify-content:center; }
+            .minecraft-avatar {
+                width:84px; height:84px; background:linear-gradient(135deg,#f39c12,#f6c84c);
+                display:flex; align-items:center; justify-content:center; border-radius:8px; color:#1b1206;
+            }
+            .member-name { font-size:1.1rem; margin-bottom:6px; font-weight:700; color:#fff; }
+            .member-role { color:#ffeaa7; margin-bottom:10px; }
+            .member-desc { color:rgba(255,234,167,0.85); font-size:0.95rem; margin-bottom:12px; }
+
+            .member-social { display:flex; gap:8px; justify-content:center; }
+            .social-icon {
+                width:40px; height:40px; border-radius:50%; background:rgba(255,234,167,0.08);
+                display:flex; align-items:center; justify-content:center; color:#fff; text-decoration:none;
+            }
+            .copy-contact { cursor:pointer; }
+
+            /* 加入按钮（页面使用） */
+            .pixel-btn { display:inline-block; padding:10px 18px; border-radius:6px; text-decoration:none; background:#f39c12; color:#1b1206; font-weight:700; }
+            .pixel-btn-green { background:#f6c84c; color:#1b1206; }
+
+            /* 响应 */
+            @media (max-width:768px){
+                .section-title { font-size:1.6rem; }
+                .section-title-bg { font-size:4rem; }
+            }
+
+            /* 补全：蓝色调 glass-card（改为黄调） */
+            .glass-card {
+                background: rgba(30,16,6,0.55);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                border: 1px solid rgba(246,200,76,0.06);
+                border-radius: 12px;
+                padding: 22px;
+                box-shadow: 0 12px 30px rgba(246,200,76,0.06);
+                transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+            }
+
+            .glass-card:hover {
+                transform: translateY(-6px);
+                box-shadow: 0 20px 50px rgba(246,200,76,0.16);
+                background: rgba(36,18,6,0.72);
+            }
+
+            /* 补全：floating 动画（及 slow / fast 变体）*/
+            .floating {
+                animation: floatY 6s ease-in-out infinite;
+            }
+
+            .floating-slow {
+                animation: floatY 10s ease-in-out infinite;
+            }
+
+            .floating-fast {
+                animation: floatY 4s ease-in-out infinite;
+            }
+
+            @keyframes floatY {
+                0% { transform: translateY(0); }
+                50% { transform: translateY(-16px); }
+                100% { transform: translateY(0); }
+            }
+
+            .feature-card:hover .feature-icon-wrapper {
+                transform: rotate(0deg);
+                box-shadow: 0 12px 30px rgba(246,200,76,0.3);
+            }
+
+            .feature-card:hover .feature-icon {
+                transform: rotate(0deg) scale(1.1);
+            }
+
+            .server-item {
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                gap:12px;
+            }
+            .server-meta { display:flex; gap:12px; align-items:center; }
+            .server-host { color: #ffeaa7; font-weight:700; }
+            .server-status { min-width:160px; text-align:center; padding:8px 12px; border-radius:8px; background:rgba(255,234,167,0.03); }
+            .server-status.online { background: linear-gradient(90deg,#d9f0b020,#d9f0b030); color:#2b2b2b; border:1px solid rgba(246,200,76,0.12); }
+            .server-status.offline { background: linear-gradient(90deg,#e07b3c20,#e07b3c30); color:#fff0d6; border:1px solid rgba(231,76,60,0.12); }
+            .server-actions button { margin-left:8px; }
+
+            /* 装饰跳转动画：链接下划线 + 悬停动效 */
+            .footer-links a,
+            .th2,
+            .pixel-btn {
+                position: relative;
+                transition: transform 0.18s ease, box-shadow 0.18s ease;
+            }
+            .footer-links a::after,
+            .th2::after,
+            .pixel-btn::after {
+                content: "";
+                position: absolute;
+                left: 8%;
+                right: 8%;
+                bottom: -6px;
+                height: 3px;
+                border-radius: 3px;
+                background: linear-gradient(90deg, rgba(255,234,167,0.95), rgba(246,200,76,0.95));
+                transform: scaleX(0);
+                transform-origin: left center;
+                transition: transform 260ms cubic-bezier(.2,.8,.2,1);
+                opacity: 0.95;
+            }
+            .footer-links a:hover::after,
+            .th2:hover::after,
+            .pixel-btn:hover::after {
+                transform: scaleX(1);
+            }
+            .footer-links a:hover,
+            .th2:hover,
+            .pixel-btn:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 10px 24px rgba(243,156,18,0.08);
+            }
+
+            /* 小装饰圆点 / 漂浮元素（页面顶部 & 规则区） */
+            .deco-blob {
+                position: absolute;
+                pointer-events: none;
+                filter: blur(18px);
+                opacity: 0.14;
+                transition: transform 0.6s ease, opacity 0.6s ease;
+            }
+            .deco-blob--a {
+                width: 220px;
+                height: 220px;
+                left: -40px;
+                top: 40px;
+                background: radial-gradient(circle at 30% 30%, #ffd166, #f39c12 60%);
+                border-radius: 50%;
+            }
+            .deco-blob--b {
+                width: 320px;
+                height: 120px;
+                right: -80px;
+                top: 260px;
+                background: linear-gradient(90deg, rgba(255,234,167,0.2), rgba(243,156,18,0.12));
+                border-radius: 60px;
+            }
+
+            /* 进入视窗时的淡入上移动画 */
+            .animate-in {
+                opacity: 0;
+                transform: translateY(18px) scale(0.995);
+                transition: opacity 520ms ease, transform 520ms cubic-bezier(.2,.9,.25,1);
+            }
+            .animate-in.visible {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+
+            /* feature-card hover 增强（光晕移动） */
+            .feature-card {
+                overflow: hidden;
+                position: relative;
+            }
+            .feature-card::before {
+                content: "";
+                position: absolute;
+                inset: -30% -30%;
+                background: radial-gradient(400px 200px at var(--x, 20%) var(--y, 20%), rgba(41,163,255,0.08), transparent 40%);
+                transition: opacity 350ms ease, transform 350ms ease;
+                opacity: 0.9;
+                pointer-events: none;
+            }
+            .feature-card:hover::before {
+                transform: scale(1.02);
+                opacity: 1;
+            }
+
+            /* back-to-top 渐隐 / 固定出现 */
+            #backToTopBtn {
+                transition: opacity .28s ease, transform .28s ease;
+                opacity: 0.0;
+            }
+            #backToTopBtn.visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            /* 保证响应下样式正常 */
+            @media (max-width:640px) {
+                .deco-blob--a { display:none; }
+            }
+
+            :root{
+                --swipe-duration: 700ms;
+                --ease: cubic-bezier(.2,.9,.25,1);
+            }
+            .page-swipe, .page-swipe .swipe-panel { will-change: transform, opacity; }
+
+            /* 过渡容器 */
+            .page-swipe {
+                position: fixed;
+                inset: 0;
+                z-index: 99999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                pointer-events: none;
+            }
+            /* 斜角面板，宽高设大以保证旋转后填满 */
+            .page-swipe .swipe-panel {
+                position: absolute;
+                width: 160%;
+                height: 140%;
+                background: linear-gradient(135deg, #f39c12 0%, #1b1206 70%);
+                left: -30%;
+                transform: translate3d(-120%,0,0) rotate(-12deg);
+                border-radius: 22px;
+                transition: transform var(--swipe-duration) var(--ease), opacity 400ms;
+                box-shadow: 0 40px 90px rgba(40,20,6,0.6);
+                pointer-events: none;
+            }
+            .page-swipe.active .swipe-panel {
+                transform: translate3d(0,0,0) rotate(-12deg);
+            }
+
+            /* 中央 logo 容器（圆角） */
+            .page-swipe .swipe-logo {
+                position: relative;
+                z-index: 100000;
+                width: 140px;
+                height: 140px;
+                border-radius: 18px;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(255,234,167,0.06);
+                box-shadow: 0 10px 30px rgba(40,20,6,0.6);
+                opacity: 0;
+                transform: scale(0.92);
+                transition: opacity 420ms ease, transform 420ms cubic-bezier(.2,.8,.2,1);
+            }
+            .page-swipe.active .swipe-logo {
+                opacity: 1;
+                transform: scale(1);
+            }
+            .page-swipe .swipe-logo img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display:block;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- 在 body 内增加装饰 DOM（便于动画控制） -->
+        <div class="deco-blob deco-blob--a" id="decoBlobA"></div>
+        <div class="deco-blob deco-blob--b" id="decoBlobB"></div>
+
+        <script>
+            function initCopyContact() {
+                document.querySelectorAll('.copy-contact').forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+
+                        const contactInfo = this.getAttribute('data-copy');
+
+                        const tempInput = document.createElement('input');
+                        tempInput.value = contactInfo;
+                        tempInput.style.position = 'absolute';
+                        tempInput.style.left = '-9999px';
+                        document.body.appendChild(tempInput);
+
+                        tempInput.select();
+                        document.execCommand('copy');
+
+                        document.body.removeChild(tempInput);
+
+                        showNotification(`已复制: ${contactInfo}`, 'success');
+
+                        this.classList.add('copied');
+                        setTimeout(() => {
+                            this.classList.remove('copied');
+                        }, 700);
+                    });
+                });
+            }
+        </script>
+
+        <div class="top-nav">
+            <div class="logo">
+                <span>北金人民政府</span>
+                <span>（仅供娱乐）</span>
+            </div>
+        </div>
+
+        <div class="container">
+            <h1 class="green">北金人民政府</h1>
+            <h3 class="qblue">介绍</h3>
+            <p class="qblue">北金人民政府是孔维谦于五年级下学期成立的<br>
+                公民可以随时加入北金人民政府<br>现任领导人：孔维谦<br>
+                政府权威性极高，北金人民政府是北金国的主要掌权政府。</p>
+
+            <h3>快速链接</h3>
+            <div class="th">
+                <a href='index.html' class="th2">little boy 主页 </a>
+            </div>
+        </div>
+
+        <section id="features" class="section features">
+            <div class="container">
+                <h2 class="section-title">北金人民政府<span>规则与说明</span></h2>
+                <div class="section-title-bg">RULES</div>
+                <p class="section-subtitle">了解我们的政府规则和相关说明，为所有公民创造一个公平、友好的环境</p>
+
+                <div class="features-grid">
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon-wrapper">
+                            <i class="fas fa-gavel feature-icon"></i>
+                        </div>
+                        <h3 class="feature-title">基本规则</h3>
+                        <p>禁止侮辱北金人民政府，禁止自封官职。</p>
+                    </div>
+
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon-wrapper">
+                            <i class="fas fa-comments feature-icon"></i>
+                        </div>
+                        <h3 class="feature-title">政府公告</h3>
+                        <p>1.老北金牛逼  2.巴豆好吃😋</p>
+                    </div>
+
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon-wrapper">
+                            <i class="fas fa-solid fa-bug feature-icon"></i>
+                        </div>
+                        <h3 class="feature-title">低错误</h3>
+                        <p>北金人民政府每一个选择都是正确的</p>
+                    </div>
+
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon-wrapper">
+                            <i class="fas fa-coins feature-icon"></i>
+                        </div>
+                        <h3 class="feature-title">经济系统</h3>
+                        <p>北金人民政府没有经济系统，任何人都可以零元购。</p>
+                    </div>
+
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon-wrapper">
+                            <i class="fas fa-user-shield feature-icon"></i>
+                        </div>
+                        <h3 class="feature-title">举报与帮助</h3>
+                        <p>遇到不文明行为或违法公民，可在微信群里@官方人员举报，官方人员会及时处理。</p>
+                    </div>
+
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon-wrapper">
+                            <i class="fas fa-brands fa-weixin feature-icon"></i>
+                        </div>
+                        <h3 class="feature-title">微信主要交流平台</h3>
+                        <p>服务器讨论主要靠微信群等进行公民&官方人员间的谈论</p>
+                    </div>
+
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon-wrapper">
+                            <i class="fas fa-calendar-alt feature-icon"></i>
+                        </div>
+                        <h3 class="feature-title">活动安排</h3>
+                        <p>北金人民政府每月举办多种活动，参与可获得丰厚奖励。关注公告和微信群通知，不要错过任何精彩活动！</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="block-border-1"></div>
+        </section>
+
+        <section id="server-team" class="server-team">
+            <div class="container">
+                <h2 class="section-title">北金人民政府<span>官方人员</span></h2>
+                <p class="section-subtitle">我们拥有一支专业且富有激情的团队，致力于为所有公民提供优质生活体验</p>
+
+                <div class="team-grid">
+                    <div class="team-member glass-card floating">
+                        <div class="member-avatar">
+                            <div class="minecraft-avatar">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                        </div>
+                        <h3 class="member-name">孔维谦</h3>
+                        <div class="member-role">北金国总统&北金人民政府领导人</div>
+                        <p class="member-desc">北金人民政府创始人，致力于打造最好的政府。</p>
+                    </div>
+
+
+                    <div class="team-member glass-card floating-fast">
+                        <div class="member-avatar">
+                            <div class="minecraft-avatar">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                        </div>
+                        <h3 class="member-name">孔维骏</h3>
+                        <div class="member-role">北金国副总统</div>
+                        <p class="member-desc">负责维护服务器与国家秩序。</p>
+                    </div>
+                    
+                    <div class="team-member glass-card floating-slow">
+                        <div class="member-avatar">
+                            <div class="minecraft-avatar">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                        </div>
+                        <h3 class="member-name">李鑫铜</h3>
+                        <div class="member-role">国防部长</div>
+                        <p class="member-desc">负责维护北金人民政府秩序，处理国家纠纷。</p>
+                    </div>
+
+                    <div class="team-member glass-card floating">
+                        <div class="member-avatar">
+                            <div class="minecraft-avatar">
+                                <i class="fas fa-hammer"></i>
+                            </div>
+                        </div>
+                        <h3 class="member-name">安思丞</h3>
+                        <div class="member-role">内阁（不属于官方人员）</div>
+                        <p class="member-desc">内阁内阁内阁内阁</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+
+        <!-- 添加：页面尾页（Footer） -->
+        <style>
+            .site-footer {
+                background: linear-gradient(180deg, rgba(6,30,60,0.6), rgba(3,18,36,0.8));
+                color: rgba(255,255,255,0.85);
+                padding: 28px 16px;
+                border-top: 1px solid rgba(167,230,255,0.04);
+            }
+            .site-footer .footer-container {
+                max-width:1100px;
+                margin:0 auto;
+                display:flex;
+                gap:18px;
+                align-items:center;
+                justify-content:space-between;
+                flex-wrap:wrap;
+            }
+            .footer-left { display:flex; gap:12px; align-items:center; }
+            .footer-logo { font-weight:800; color:#A7E6FF; font-size:1rem; }
+            .footer-links { display:flex; gap:10px; flex-wrap:wrap; }
+            .footer-links a { color:rgba(167,230,255,0.9); text-decoration:none; padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.02); }
+            .footer-right { display:flex; gap:12px; align-items:center; color:rgba(255,255,255,0.7); font-size:0.95rem; }
+
+            .footer-copy { width:100%; text-align:center; margin-top:12px; color:rgba(255,255,255,0.55); font-size:0.88rem; }
+
+            .back-to-top {
+                appearance:none;
+                border:0;
+                background:#0d6efd;
+                color:#fff;
+                padding:8px 10px;
+                border-radius:6px;
+                cursor:pointer;
+                font-weight:700;
+            }
+
+            @media (max-width:640px){
+                .site-footer .footer-container { flex-direction:column; gap:12px; align-items:center; }
+                .footer-right { font-size:0.85rem; }
+            }
+        </style>
+
+        <footer class="site-footer">
+            <div class="footer-container">
+                <div class="footer-left">
+                    <div class="footer-logo">little boy 服务器组</div>
+                    <div class="footer-links">
+                        <a href="index.html">主页</a>
+                        <a href="#features">规则</a>
+                        <a href="https://afdian.com/a/little-boy-game" target="_blank">支持我们</a>
+                    </div>
+                </div>
+
+                <div class="footer-right">
+                    <div>联系（little boy game）: <span style="color:#A7E6FF; font-weight:700;">QQ 84778333</span></div>
+                    <button class="back-to-top" id="backToTopBtn">回到顶部</button>
+                </div>
+
+                <div class="footer-copy">© <span id="footer-year"></span> little boy. 保留所有权利。</div>
+            </div>
+        </footer>
+
+        <script>
+            // 回到顶部与年份、简单在线数统计（使用已有 SERVER_LIST）
+            (function(){
+                // 设置年份
+                const yearEl = document.getElementById('footer-year');
+                if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+                // 回到顶部
+                const btn = document.getElementById('backToTopBtn');
+                if (btn) btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+                // 简单尝试统计在线数量（并不会触发实际 API 请求，只统计已知状态元素显示“在线”时）
+                function updateFooterOnlineCount() {
+                    const list = document.querySelectorAll('.server-status.online');
+                    let totalOnline = 0;
+                    list.forEach(el => {
+                        const text = el.textContent || '';
+                        const m = text.match(/在线：\s*(\d+)\s*\/\s*(\d+)/);
+                        if (m) totalOnline += parseInt(m[1], 10);
+                    });
+                    const out = totalOnline > 0 ? `${totalOnline} 玩家` : '暂无统计';
+                    const el = document.getElementById('footer-online-count');
+                    if (el) el.textContent = out;
+                }
+
+                // 轮询更新 footer 在线数（每 5 秒）
+                setInterval(updateFooterOnlineCount, 5000);
+                // 立即运行一次
+                updateFooterOnlineCount();
+            })();
+        </script>
+
+        <!-- 在文件末尾添加动画初始化脚本 -->
+        <script>
+            // 平滑锚点滚动（适用于内部链接）
+            document.querySelectorAll('a[href^="#"]').forEach(a => {
+                a.addEventListener('click', function (e) {
+                    const targetId = this.getAttribute('href').slice(1);
+                    const el = document.getElementById(targetId);
+                    if (el) {
+                        e.preventDefault();
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        history.replaceState(null, '', `#${targetId}`);
+                    }
+                });
+            });
+
+            // 回到顶部按钮显示控制
+            const backBtn = document.getElementById('backToTopBtn');
+            window.addEventListener('scroll', () => {
+                if (!backBtn) return;
+                if (window.scrollY > 320) backBtn.classList.add('visible');
+                else backBtn.classList.remove('visible');
+            });
+
+            // 视窗进入时触发 animate-in.visible（IntersectionObserver）
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.18 });
+
+            document.querySelectorAll('.feature-card, .team-member, .section-title, .server-item').forEach(el => {
+                el.classList.add('animate-in');
+                io.observe(el);
+            });
+
+            // feature-card 鼠标跟随光斑
+            document.querySelectorAll('.feature-card').forEach(card => {
+                card.addEventListener('mousemove', (ev) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = ((ev.clientX - rect.left) / rect.width) * 100;
+                    const y = ((ev.clientY - rect.top) / rect.height) * 100;
+                    card.style.setProperty('--x', x + '%');
+                    card.style.setProperty('--y', y + '%');
+                });
+            });
+
+            // 装饰 Blob 跟随鼠标做微动（轻量）
+            (function decoFollow() {
+                const a = document.getElementById('decoBlobA');
+                const b = document.getElementById('decoBlobB');
+                if (!a || !b) return;
+                window.addEventListener('mousemove', e => {
+                    const rx = (e.clientX / window.innerWidth - 0.5) * 30;
+                    const ry = (e.clientY / window.innerHeight - 0.5) * 20;
+                    a.style.transform = `translate(${rx}px, ${ry}px)`;
+                    b.style.transform = `translate(${rx * -0.6}px, ${ry * -0.6}px)`;
+                });
+            })();
+
+            // 初始化复制联系方式的控件（如之前实现）
+            if (typeof initCopyContact === 'function') initCopyContact();
+        </script>
+
+        <!-- 页面切换过渡（蓝黑幕斜角滑行 + 中央 logo，点击跳转到主页时触发） -->
+        <style>
+            /* 过渡容器 */
+            .page-swipe {
+                position: fixed;
+                inset: 0;
+                z-index: 99999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                pointer-events: none;
+                will-change: transform, opacity;
+                overflow: hidden; /* 防止子面板超出产生滚动条 */
+            }
+            /* 斜角面板，宽高设大以保证旋转后填满 */
+            .page-swipe .swipe-panel {
+                position: absolute;
+                width: 160%;
+                height: 140%;
+                background: linear-gradient(135deg, #f39c12 0%, #1b1206 70%);
+                /* 通过 left/right 控制，避免在某些浏览器触发布局溢出 */
+                left: -30%;
+                transform: translate3d(-120%,0,0) rotate(-12deg);
+                border-radius: 22px;
+                transition: transform var(--swipe-duration) var(--ease), opacity 400ms;
+                box-shadow: 0 40px 90px rgba(40,20,6,0.6);
+                pointer-events: none;
+            }
+            .page-swipe.active .swipe-panel {
+                transform: translate3d(0,0,0) rotate(-12deg);
+            }
+
+            /* 中央 logo 容器（圆角） */
+            .page-swipe .swipe-logo {
+                position: relative;
+                z-index: 100000;
+                width: 140px;
+                height: 140px;
+                border-radius: 18px;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(255,234,167,0.06);
+                box-shadow: 0 10px 30px rgba(40,20,6,0.6);
+                opacity: 0;
+                transform: scale(0.92);
+                transition: opacity 420ms ease, transform 420ms cubic-bezier(.2,.8,.2,1);
+            }
+            .page-swipe.active .swipe-logo {
+                opacity: 1;
+                transform: scale(1);
+            }
+            .page-swipe .swipe-logo img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display:block;
+            }
+        </style>
+
+        <!-- overlay DOM（初始隐藏） -->
+        <div id="pageSwipe" class="page-swipe" aria-hidden="true" style="display:none">
+            <div class="swipe-panel" aria-hidden="true"></div>
+            <div class="swipe-logo" aria-hidden="true">
+                <!-- 在这里放转场用的 logo 图片 -->
+                <!-- 建议路径： assets/images/transition-logo.png -->
+                <!-- 如果没有图片，可把下面 <img> 的 src 改为你项目中的图片路径 -->
+                <img src="bjlogo.jpg" alt="logo">
+            </div>
+        </div>
+
+        <script>
+            (function(){
+                const TRANSITION_MS = 700; // 与 index 保持一致
+                const swipeEl = document.getElementById('pageSwipe');
+
+                function ensureVisible() {
+                    if (!swipeEl) return;
+                    swipeEl.style.display = 'flex';
+                }
+                function hideImmediately() {
+                    if (!swipeEl) return;
+                    swipeEl.style.display = 'none';
+                    swipeEl.classList.remove('active');
+                }
+
+                // 播放转场并在结束后跳转
+                async function playTransitionAndNavigate(href) {
+                    if (!swipeEl) {
+                        window.location.href = href;
+                        return;
+                    }
+
+                    ensureVisible();
+                    // 小延时确保样式已应用
+                    requestAnimationFrame(() => {
+                        // 强制下一帧再触发 class，降低抖动
+                        swipeEl.classList.add('active');
+                        swipeEl.setAttribute('aria-hidden','false');
+                    });
+
+                    // 等待滑满屏（移除切开阶段，直接导航）
+                    await new Promise(r => setTimeout(r, TRANSITION_MS + 40)); // + small buffer
+
+                    // 最终导航
+                    // 标记：告知目标主页在下一次加载时播放入口切开动画
+                    try { sessionStorage.setItem('playEntryOnNextLoad', '1'); } catch(e) {}
+                    window.location.href = href;
+                }
+
+                // 绑定点击至首页或任意需要转场的链接
+                // 规则：带 data-transition="swipe" 的链接会触发转场
+                document.addEventListener('click', (e) => {
+                    const a = e.target.closest('a, button');
+                    if (!a) return;
+                    // 支持 a[href="index.html"] 或 data-transition="swipe"
+                    const href = a.getAttribute('href');
+                    const wants = a.getAttribute('data-transition');
+                    if (wants === 'swipe' || href === 'index.html' || href === './index.html' || href === '/index.html') {
+                        // 仅在同源导航且确认为页面跳转时拦截
+                        if (a.tagName.toLowerCase() === 'a' && href && !href.startsWith('http')) {
+                            e.preventDefault();
+                            playTransitionAndNavigate(href);
+                        }
+                    }
+                });
+
+                // 如果需要在页面加载完后自动播放（例如从子页返回主页），可在此检测 location.state 或 URL 参数
+                // 页面卸载时（防止短暂闪烁）保留 overlay
+                window.addEventListener('pageshow', (ev) => {
+                    // 若需隐藏 overlay（例如后退回本页），确保隐藏
+                    hideImmediately();
+                });
+            })();
+        </script>
+    </body>
+</html>
+

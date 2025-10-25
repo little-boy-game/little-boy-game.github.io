@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>班内新闻 - little boy game</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root{
+            --bg:#071428;
+            --accent:#0d6efd;
+            --card:#0a2138;
+            --muted:rgba(255,255,255,0.7);
+            --swipe-duration:700ms;
+            --ease:cubic-bezier(.2,.9,.25,1);
+        }
+        *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,Helvetica,sans-serif}
+        html{overflow-y:scroll;overflow-x:hidden}
+        body{background:var(--bg);color:#fff;line-height:1.5;padding-bottom:40px}
+        .top-nav{height:60px;background:var(--accent);display:flex;align-items:center;padding:0 18px}
+        .logo{display:flex;align-items:center;gap:10px}
+        .logo img{height:36px;display:block}
+        .logo span{font-weight:700;color:#fff}
+        .container{max-width:1100px;margin:28px auto;padding:0 16px}
+        h1{font-size:1.6rem;margin-bottom:8px;color:#fff}
+        .lead{color:var(--muted);margin-bottom:18px}
+
+        /* 新闻列表 */
+        .news-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+        .news-card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:16px;border:1px solid rgba(255,255,255,0.03);position:relative;overflow:hidden}
+        .news-title{font-weight:700;color:var(--accent);margin-bottom:8px}
+        .news-meta{font-size:0.88rem;color:var(--muted);margin-bottom:12px}
+        .news-body{color:rgba(255,255,255,0.92);font-size:0.96rem}
+        .news-thumb{width:100%;height:160px;object-fit:cover;border-radius:8px;margin-bottom:12px;background:#031023}
+
+        .controls{display:flex;gap:10px;margin:14px 0 18px}
+        .btn{background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none;cursor:pointer;border:none}
+        .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+
+        /* page-swipe 动画层（与 index 保持一致） */
+        .page-swipe{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;pointer-events:none}
+        .page-swipe .swipe-panel{position:absolute;width:160%;height:140%;background:linear-gradient(135deg,var(--accent) 0%, #071428 70%);left:-30%;transform:translate3d(-120%,0,0) rotate(-12deg);border-radius:22px;transition:transform var(--swipe-duration) var(--ease),opacity 400ms;box-shadow:0 40px 90px rgba(2,6,23,0.55);pointer-events:none}
+        .page-swipe.active .swipe-panel{transform:translate3d(0,0,0) rotate(-12deg)}
+        .page-swipe .swipe-logo{position:relative;z-index:100000;width:110px;height:110px;border-radius:14px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.04);opacity:0;transform:scale(.92);transition:opacity 420ms,var(--ease)}
+        .page-swipe.active .swipe-logo{opacity:1;transform:scale(1)}
+
+        footer{max-width:1100px;margin:40px auto;color:var(--muted);padding:0 16px;text-align:center;font-size:0.9rem}
+        a.qblue{color:var(--accent);text-decoration:none}
+    </style>
+</head>
+<body>
+    <div class="top-nav">
+        <div class="logo">
+            <img src="logo.png" alt="Logo">
+            <span>little boy game</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>班内新闻</h1>
+        <p class="lead">展示最新班级公告与动态，新闻不来自学校，仅为小道消息</p>
+
+        <div class="controls">
+            <button id="refreshBtn" class="btn">刷新新闻</button>
+            <a href="index.html" data-transition="swipe" class="btn secondary">返回主页</a>
+        </div>
+
+        <div id="newsList" class="news-list" aria-live="polite">
+            <!-- 新闻卡片将被渲染到这里 -->
+            <div style="grid-column:1/-1;color:var(--muted)">正在加载新闻…</div>
+        </div>
+    </div>
+
+    <!-- page swipe overlay -->
+    <div id="pageSwipe" class="page-swipe" aria-hidden="true" style="display:none">
+        <div class="swipe-panel" aria-hidden="true"></div>
+        <div class="swipe-logo" aria-hidden="true">
+            <img src="Logo.png" alt="logo" style="width:100%;height:100%;object-fit:contain">
+        </div>
+    </div>
+
+    <footer>© 班级内部 - little boy game</footer>
+
+    <script>
+    (function(){
+        const newsEl = document.getElementById('newsList');
+        const refreshBtn = document.getElementById('refreshBtn');
+
+        const remoteMeta = document.querySelector('meta[name="md-remote"]');
+        const remoteUrl = remoteMeta && remoteMeta.content ? String(remoteMeta.content).trim() : null;
+        const candidates = [
+            remoteUrl,
+            './b_xw.md',
+            'b_xw.md',
+            './b_xw.json',
+            'b_xw.json'
+        ].filter(Boolean);
+
+        function showError(msg){
+            newsEl.innerHTML = `<div style="grid-column:1/-1;color:#f6c84c">${msg}</div>`;
+            console.warn(msg);
+        }
+
+        function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+        function simpleMdToHtml(md){
+            md = String(md||'');
+            let codeBlocks=[]; md = md.replace(/```([\s\S]*?)```/g,(m,p1)=>{ const i=codeBlocks.push(escapeHtml(p1))-1; return '\n@@CB'+i+'@@\n';});
+            const lines = md.split(/\r?\n/);
+            let html='', inList=false;
+            lines.forEach(line=>{
+                if(/^\s*[-*+]\s+/.test(line)){ if(!inList){inList=true;html+='<ul>'} html+='<li>'+inline(line.replace(/^\s*[-*+]\s+/,''))+'</li>'; return }
+                else if(inList){ html+='</ul>'; inList=false }
+                const h=line.match(/^(#{1,6})\s+(.*)/);
+                if(h){ html+=`<h${h[1].length}>${inline(h[2])}</h${h[1].length}>`; return }
+                if(/^\s*$/.test(line)){ html+=''; return }
+                html+=`<p>${inline(line)}</p>`
+            });
+            if(inList) html+='</ul>';
+            html=html.replace(/@@CB(\d+)@@/g,(m,i)=>`<pre><code>${codeBlocks[i]||''}</code></pre>`);
+            return html;
+            function inline(t){
+                t = escapeHtml(t);
+                t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,(m,alt,url)=>`<img src="${url}" alt="${alt}" style="max-width:100%;height:auto;border-radius:6px">`);
+                t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g,(m,txt,url)=>`<a href="${url}" target="_blank" rel="noopener noreferrer">${txt}</a>`);
+                t = t.replace(/`([^`]+)`/g,(m,c)=>`<code>${escapeHtml(c)}</code>`);
+                t = t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+                t = t.replace(/(^|[^*])\*([^*]+)\*([^*]|$)/g,(m,a,b,c)=>`${a}<em>${b}</em>${c}`);
+                return t;
+            }
+        }
+
+        function renderFromMd(md){
+            const parts = String(md||'').split(/\n-{3,}\n|(?=\n# )/).map(s=>s.trim()).filter(Boolean);
+            if(parts.length===0){ newsEl.innerHTML = '<div style="grid-column:1/-1;color:var(--muted)">暂无新闻</div>'; return; }
+            const nodes = parts.map(p=>{
+                let title='', meta=''; let bodyHtml='';
+                const lines = p.split(/\r?\n/).filter(Boolean);
+                if(lines[0] && lines[0].match(/^#{1,3}\s+/)){ title = lines[0].replace(/^#{1,3}\s+/,''); lines.shift() }
+                if(lines[0] && /^\d{4}[-/]\d{1,2}/.test(lines[0])){ meta = lines[0]; lines.shift() }
+                bodyHtml = simpleMdToHtml(lines.join('\n'));
+                return {title,meta,bodyHtml};
+            });
+
+            newsEl.innerHTML = '';
+            nodes.forEach(n=>{
+                const card = document.createElement('article');
+                card.className = 'news-card';
+                const title = n.title || '未命名新闻';
+                card.innerHTML = `
+                    <div class="news-title">${escapeHtml(title)}</div>
+                    <div class="news-meta">${escapeHtml(n.meta || '')}</div>
+                    <div class="news-body">${n.bodyHtml}</div>
+                `;
+                newsEl.appendChild(card);
+            });
+        }
+
+        function renderFromJson(obj){
+            if(!Array.isArray(obj) || obj.length===0){ newsEl.innerHTML = '<div style="grid-column:1/-1;color:var(--muted)">暂无新闻</div>'; return; }
+            newsEl.innerHTML = '';
+            obj.forEach(item=>{
+                const card = document.createElement('article');
+                card.className = 'news-card';
+                const thumb = item.image ? `<img class="news-thumb" src="${item.image}" alt="">` : '';
+                const meta = item.date || '';
+                const body = item.content ? simpleMdToHtml(item.content) : (item.html || '');
+                card.innerHTML = `${thumb}<div class="news-title">${escapeHtml(item.title||'未命名')}</div><div class="news-meta">${escapeHtml(meta)}</div><div class="news-body">${body}</div>`;
+                newsEl.appendChild(card);
+            });
+        }
+
+        function fetchTimeout(url, timeout=9000){
+            const controller = new AbortController();
+            const id = setTimeout(()=>controller.abort(), timeout);
+            return fetch(url, {signal:controller.signal}).finally(()=>clearTimeout(id));
+        }
+
+        // 公共代理回退（按需使用）：api.allorigins.win / corsproxy.io
+        const CORS_PROXY_LIST = [
+            (u)=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+            (u)=>`https://corsproxy.io/?${u}`
+        ];
+
+        // 如果直接 fetch 触发 CORS 错误（TypeError），尝试代理
+        async function fetchWithCorsFallback(url){
+            try {
+                const res = await fetchTimeout(url);
+                if (res && res.ok) return res;
+            } catch (e) {
+                // 直接失败（可能 CORS），继续到代理
+                console.warn('direct fetch failed, try proxies', e);
+            }
+            for(const getProxyUrl of CORS_PROXY_LIST){
+                try {
+                    const proxyUrl = getProxyUrl(url);
+                    console.debug('尝试代理：', proxyUrl);
+                    const pres = await fetchTimeout(proxyUrl);
+                    if (pres && pres.ok) return pres;
+                } catch (pe){
+                    console.warn('proxy failed', pe);
+                }
+            }
+            throw new Error('direct+proxy fetch failed');
+        }
+
+        async function loadNews(){
+            newsEl.innerHTML = '<div style="grid-column:1/-1;color:var(--muted)">加载中…</div>';
+            const errors = [];
+            for(const url of candidates){
+                if(!url) continue;
+                try{
+                    console.debug('尝试加载新闻：', url);
+                    // 若为外部 http(s) 且 origin 不同，使用带回退的 fetchWithCorsFallback
+                    let isCrossOrigin = false;
+                    try { if (/^https?:\/\//i.test(url)) { const u=new URL(url); isCrossOrigin = (u.origin !== location.origin); } } catch(e){}
+                    const res = (isCrossOrigin ? await fetchWithCorsFallback(url) : await fetchTimeout(url));
+                    if(!res){ errors.push(`${url} -> no response`); continue; }
+                    if(!res.ok){ errors.push(`${url} -> status ${res.status}`); continue; }
+                    // 尝试按 content-type 处理；代理可能不保留 content-type
+                    const ct = (res.headers && typeof res.headers.get === 'function') ? (res.headers.get('content-type')||'').toLowerCase() : '';
+                    const text = await res.text();
+                    if(ct.includes('application/json') || url.toLowerCase().endsWith('.json')){
+                        try { const j = JSON.parse(text); renderFromJson(j); return; } catch(e){ /* 解析失败，继续当 md */ }
+                    }
+                    // 优先当 markdown 处理
+                    renderFromMd(text);
+                    return;
+                } catch (e){
+                    console.error('加载失败：', url, e);
+                    errors.push(`${url} -> ${e && e.message ? e.message : e}`);
+                }
+            }
+            showError('无法加载新闻。尝试的路径：<br>' + candidates.map(c=>`<code>${c}</code>`).join(' , ') +
+                '<br>错误详情（见 Console）：<br><pre style="color:#ffd166">' + errors.join('\n') + '</pre>' +
+                '<br>若是跨域(CORS)问题，请参考页面说明或启用服务器端 CORS。');
+        }
+
+        refreshBtn.addEventListener('click',()=>{ loadNews(); });
+        loadNews();
+
+        // 页面转场：拦截带 data-transition 的链接，播放 page-swipe
+        (function pageSwipe() {
+            const links = document.querySelectorAll('a[data-transition="swipe"]');
+            const swipe = document.getElementById('pageSwipe');
+            const panel = swipe && swipe.querySelector('.swipe-panel');
+            function playAndNavigate(href){
+                if(!swipe || !panel){ location.href = href; return; }
+                swipe.style.display = 'flex';
+                requestAnimationFrame(()=>{ swipe.classList.add('active'); swipe.setAttribute('aria-hidden','false'); });
+                setTimeout(()=>{ try{ sessionStorage.setItem('playEntryOnNextLoad','1'); }catch(e){}; location.href = href; }, 720);
+            }
+            links.forEach(a=>{
+                a.addEventListener('click', function(e){
+                    const href = this.getAttribute('href');
+                    if(!href || href.startsWith('#')) return;
+                    e.preventDefault();
+                    playAndNavigate(href);
+                });
+            });
+        })();
+
+        window._loadNews = loadNews;
+    })();
+    </script>
+</body>
+</html>
