@@ -1,78 +1,271 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <title>little boy game</title>
-    <style>
-      .top-nav {
-        background-color: #007bff; 
-        display: flex;
-        justify-content: space-between; 
-        align-items: center;
-        padding: 0 20px; 
-        height: 60px; 
-      }
+    <head>
+        <meta charset="UTF-8" />
+        <title>little boy game</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <style>
+            :root{
+                --swipe-duration: 700ms;
+                --logo-show: 420ms;
+                --logo-hold: 500ms;
+                --logo-cut: 420ms;
+                --ease: cubic-bezier(.2,.9,.25,1);
+            }
+            /* 优化渲染提示 */
+            .entry-swipe, .entry-swipe .panel, .page-swipe, .page-swipe .swipe-panel { will-change: transform, opacity; }
 
-      .logo {
-        display: flex;
-        align-items: center;
-      }
+            /* ---------- 全局重置与滚动修复 ---------- */
+            * { margin:0; padding:0; box-sizing:border-box; font-family: Arial, Helvetica, sans-serif; }
+            /* 始终保留纵向滚动条，禁止横向溢出（防止页面左右抖动与横向滚动条） */
+            html { overflow-y: scroll; overflow-x: hidden; }
+            body.preload { overflow: hidden; } /* 入口动画播放时禁止滚动 */
+            /* 隐藏页面除 entry overlay 之外的所有内容，避免先闪烁页面再开始动画 */
+            body.preload > :not(#entrySwipe) { visibility: hidden !important; pointer-events: none !important; }
+            body { overflow-x: hidden; -webkit-overflow-scrolling: touch; background:#071428; color:#fff; line-height:1.5; }
 
-      .logo img {
-        height: 36px; 
-        width: auto;
-      }
+            /* ---------- 导航 / 顶部 ---------- */
+            .top-nav { background:#0d6efd; height:60px; display:flex; align-items:center; padding:0 20px; }
+            .logo { display:flex; gap:10px; align-items:center; }
+            .logo img { height:36px; width:auto; display:block; }
+            .logo span { color:#fff; font-weight:700; }
 
-      .logo span {
-        color: #fff;
-        font-size: 20px;
-        margin-left: 8px;
-        font-weight: bold;
-      }
+            /* ---------- 颜色类（蓝色调统一） ---------- */
+            .green { color:#66b0ff; } /* 统一为蓝色调 */
+            .qblue { color:#9be7ff; }
+            .blue { color:#9be7ff; }
+            .break { color:#28d25b; } /* 保留其他类名以免引用断裂 */
 
-      .nav-links {
-        display: flex;
-        gap: 30px; 
-      }
+            /* ---------- 布局 / 卡片 / 按钮 ---------- */
+            .container { max-width:1100px; margin:0 auto; padding:30px 16px; }
+            .section { padding:60px 0; position:relative; }
+            .section-title { font-size:2.4rem; font-weight:800; text-align:center; margin-bottom:10px; color:#fff; }
+            .section-title span { color:#A7E6FF; display:inline-block; }
+            .section-subtitle { text-align:center; color:rgba(255,255,255,0.8); max-width:800px; margin:12px auto 30px; }
 
-      .nav-links a {
-        color: #fff;
-        text-decoration: none; 
-        font-size: 16px;
-      }
-      .red {
-        color: red;
-      }
-      .blue {
-        color: blue;
-      }
-      .green {
-        color: green;
-      }
-      .orange {
-        color: orange;
-      }
-      .pink {
-        color: pink;
-      }
-      .purple {
-        color: purple;
-      }
-      .break {
-        color: #28d25b;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="top-nav">
-      <div class="logo">
-        <span>little boy game</span>
-        <span>我的世界</span>
-      </div>
-    </div>
-    <h1 class="green">little boy game</h1>
-    <h3>分页：</h3>
-    <a href="LittleBoyServer.html" class="blue">little boy 服务器组</a>
-  </body>
+            .features-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap:20px; align-items:start; }
+            .feature-card { background:rgba(6,30,60,0.6); border-radius:12px; padding:22px; border:1px solid rgba(173,216,255,0.06); overflow:hidden; position:relative; }
+            .feature-icon-wrapper { width:72px; height:72px; margin:0 auto 16px; background:linear-gradient(135deg,#3a8af0,#1e90ff); display:flex; align-items:center; justify-content:center; border-radius:12px; }
+            .feature-icon { color:#fff; font-size:22px; }
+            .feature-title { text-align:center; color:#A7E6FF; font-weight:700; margin:10px 0; }
+            .feature-card p { color:rgba(255,255,255,0.9); font-size:0.98rem; line-height:1.6; }
+
+            .glass-card {
+                background: rgba(10, 28, 50, 0.55);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                border: 1px solid rgba(167, 230, 255, 0.06);
+                border-radius: 12px;
+                padding: 22px;
+                box-shadow: 0 12px 30px rgba(30, 144, 255, 0.06);
+                transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+            }
+
+            .th { background:#0b3a66; display:flex; gap:12px; padding:10px; align-items:center; }
+            .th2 {
+                background:#29a3ff;
+                color:#ffffff;
+                border:none;
+                padding:6px 12px;
+                height:30px;
+                border-radius:6px;
+                cursor:pointer;
+                text-decoration:none;
+            }
+
+            /* ---------- 装饰 / 动画 / 视觉稳定 ---------- */
+            .deco-blob { position: absolute; pointer-events: none; filter: blur(18px); opacity: 0.14; transition: transform 0.6s ease, opacity 0.6s ease; }
+            .deco-blob--a { width:220px; height:220px; left:-40px; top:40px; background: radial-gradient(circle at 30% 30%, #29a3ff, #0d6efd 60%); border-radius:50%; }
+            .deco-blob--b { width:320px; height:120px; right:-80px; top:260px; background: linear-gradient(90deg, rgba(167,230,255,0.2), rgba(30,144,255,0.12)); border-radius:60px; }
+
+            .animate-in { opacity:0; transform: translateY(18px) scale(.995); transition: opacity .52s ease, transform .52s cubic-bezier(.2,.9,.25,1); }
+            .animate-in.visible { opacity:1; transform:none; }
+
+            /* ---------- server-list / footer 简单样式 ---------- */
+            .server-item { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+            .server-host { color:#A7E6FF; font-weight:700; }
+            .server-status { min-width:160px; text-align:center; padding:8px 12px; border-radius:8px; background:rgba(255,255,255,0.03); }
+            .server-status.online { background: linear-gradient(90deg,#1ec27f20,#1ec27f30); color:#bfffe3; border:1px solid rgba(46,204,113,0.12); }
+            .server-status.offline { background: linear-gradient(90deg,#e74c3c20,#e74c3c30); color:#ffd2d2; border:1px solid rgba(231,76,60,0.12); }
+
+            /* ---------- 入口动画：中间切开（修复过溢出与滚动条问题） ---------- */
+            .entry-swipe {
+                position: fixed;
+                inset: 0;
+                z-index: 999999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                pointer-events: none;      /* 默认不拦截事件 */
+                overflow: hidden;
+            }
+            .entry-swipe.show { pointer-events: auto; } /* 显示时拦截事件，避免用户操作页面 */
+
+            /* 两块覆盖面板：左右外移（使用 translate 不改布局） */
+            .entry-swipe .panel {
+                position: absolute;
+                width: 70vw;                /* 用视口宽度，避免超出导致滚动条 */
+                max-width: 900px;
+                height: 160vh;
+                top: -30vh;
+                background: linear-gradient(135deg, #071428 0%, #0d6efd 70%);
+                border-radius: 20px;
+                box-shadow: 0 30px 80px rgba(2,6,23,0.6);
+                transform-origin: center;
+                transition: transform var(--swipe-duration) var(--ease), opacity 420ms ease;
+                will-change: transform, opacity;
+                left: 50%;
+            }
+            /* 使用 translate3d 和 CSS 变量以便 GPU 加速与统一时长 */
+            .entry-swipe .panel.left { transform: translate3d(-260vw,0,0) rotate(-12deg); }   /* 初始值在视口外 */
+            .entry-swipe .panel.right { transform: translate3d(260vw,0,0) rotate(-12deg); }  /* 初始值在视口外 */
+            .entry-swipe.show .panel.left  { transform: translate3d(-50vw,0,0) rotate(-12deg); } /* 滑到中间覆盖 */
+            .entry-swipe.show .panel.right { transform: translate3d(50vw,0,0) rotate(-12deg); }
+
+            /* 中央 logo（圆角） */
+            .entry-swipe .center-logo {
+                position: relative;
+                z-index: 1000000;
+                width: 140px; height: 140px;
+                border-radius: 18px;
+                overflow: hidden;
+                display: flex; align-items: center; justify-content: center;
+                background: rgba(255,255,255,0.04);
+                box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+                opacity: 0; transform: scale(.92);
+                transition: opacity var(--logo-show) var(--ease), transform var(--logo-show) var(--ease);
+            }
+            .entry-swipe.show .center-logo { opacity:1; transform: scale(1); }
+            .entry-swipe .center-logo img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;        /* 保证图片完整可见（不被裁切） */
+                display:block;
+                padding: 6px;               /* 给圆角留白，避免边缘被圆角裁剪 */
+                background: transparent;
+            }
+
+            /* 切开：左右面板向两侧快速移出（把值设大，避免触发横滚） */
+            .entry-swipe.cut .panel.left  { transform: translate3d(-260vw,0,0) rotate(-12deg); opacity: 0; transition: transform var(--logo-cut) var(--ease), opacity .32s; }
+            .entry-swipe.cut .panel.right { transform: translate3d(260vw,0,0) rotate(-12deg);  opacity: 0; transition: transform var(--logo-cut) var(--ease), opacity .32s; }
+
+            /* 响应 */
+            @media (max-width:640px) {
+                .entry-swipe .center-logo { width:110px; height:110px; border-radius:12px; }
+                .entry-swipe .panel { width:120vw; left: 50%; }
+            }
+        </style>
+    </head>
+
+    <!-- 初始添加 preload 类，确保页面不先闪烁内容 -->
+    <body class="preload">
+        <!-- 装饰 -->
+        <div class="deco-blob deco-blob--a" id="decoBlobA"></div>
+        <div class="deco-blob deco-blob--b" id="decoBlobB"></div>
+
+        <!-- 顶栏 -->
+        <div class="top-nav">
+            <div class="logo">
+                <!-- logo.png 放在此目录下或改为你的路径 -->
+                <img src="logo.png" alt="Logo">
+                <span>little boy game</span>
+            </div>
+        </div>
+
+        <div class="container">
+            <h1 class="green">little boy game</h1>
+            <div class="section-subtitle">
+              <h3>分页：</h3>
+                <div class="th">
+
+                  <a href="LittleBoyServer.html" class="qblue th2" data-transition="swipe" >little boy 服务器组  <i class="fa-solid fa-gamepad"></i></a>
+                  <a href="md.html" class="qblue th2" data-transition="swipe" >鸣谢名单  <i class="fa-solid fa-leaf"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 入口动画覆盖层 -->
+        <div id="entrySwipe" class="entry-swipe" aria-hidden="true" style="display:none">
+            <div class="panel left" aria-hidden="true"></div>
+            <div class="panel right" aria-hidden="true"></div>
+            <div class="center-logo" aria-hidden="true">
+                <!-- 在此放入口 logo（圆角），建议： assets/images/entry-logo.png -->
+                <img src="Logo.png" alt="entry logo">
+            </div>
+        </div>
+
+        <script>
+            (function () {
+                const entry = document.getElementById('entrySwipe');
+                if (!entry) {
+                    // 若 overlay DOM 不在，立即显示页面
+                    document.body.classList.remove('preload');
+                    return;
+                }
+
+                // 与 CSS 变量保持一致（单位：ms）
+                const SHOW_MS = 420;
+                const HOLD_MS = 500;
+                const CUT_MS = 420;
+
+                // 播放入口动画的逻辑：
+                // - 如果来自带转场的页面（playEntryOnNextLoad === '1'），则一定播放一次并清除标志。
+                // - 否则仅在本会话未播放过时播放（session 内首次访问）。
+                function shouldPlayEntry() {
+                    try {
+                        if (sessionStorage.getItem('playEntryOnNextLoad') === '1') return true;
+                        if (!sessionStorage.getItem('entryPlayed')) return true;
+                    } catch (e) {}
+                    return false;
+                }
+
+                function markPlayed() {
+                    try { sessionStorage.setItem('entryPlayed', '1'); sessionStorage.removeItem('playEntryOnNextLoad'); } catch(e){}
+                }
+
+                // 隐藏 overlay 并显示页面内容
+                function finishEntry() {
+                    entry.style.display = 'none';
+                    entry.classList.remove('show','cut');
+                    entry.setAttribute('aria-hidden','true');
+                    document.body.classList.remove('preload'); // 显示页面内容
+                    markPlayed();
+                }
+
+                function playEntry() {
+                    // 确保 overlay 可见并阻止页面交互
+                    entry.style.display = 'flex';
+                    // render frame
+                    requestAnimationFrame(() => {
+                        entry.classList.add('show'); // panels 滑入并 logo 渐显
+                        entry.setAttribute('aria-hidden','false');
+                    });
+
+                    // 等待 logo 显示后进行切开
+                    setTimeout(() => {
+                        entry.classList.add('cut'); // 面板向两侧移出
+                    }, SHOW_MS + HOLD_MS);
+
+                    // 切开结束后隐藏 overlay 并显示页面
+                    setTimeout(() => {
+                        finishEntry();
+                    }, SHOW_MS + HOLD_MS + CUT_MS + 60);
+                }
+
+                // pageshow 可兼容 bfcache（后退）
+                window.addEventListener('pageshow', (e) => {
+                    if (!shouldPlayEntry()) {
+                        // 不播放动画：直接显示页面
+                        document.body.classList.remove('preload');
+                        entry.style.display = 'none';
+                        return;
+                    }
+                    // 确保 overlay 在首帧展示，避免先闪烁页面再开始动画
+                    // 使用 requestAnimationFrame + small timeout 让浏览器先绘制 overlay
+                    requestAnimationFrame(() => setTimeout(playEntry, 60));
+                }, { once: true });
+            })();
+        </script>
+    </body>
 </html>
 

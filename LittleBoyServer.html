@@ -283,6 +283,67 @@
             @media (max-width:640px) {
                 .deco-blob--a { display:none; }
             }
+
+            :root{
+                --swipe-duration: 700ms;
+                --ease: cubic-bezier(.2,.9,.25,1);
+            }
+            .page-swipe, .page-swipe .swipe-panel { will-change: transform, opacity; }
+
+            /* 过渡容器 */
+            .page-swipe {
+                position: fixed;
+                inset: 0;
+                z-index: 99999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                pointer-events: none;
+            }
+            /* 斜角面板，宽高设大以保证旋转后填满 */
+            .page-swipe .swipe-panel {
+                position: absolute;
+                width: 160%;
+                height: 140%;
+                background: linear-gradient(135deg, #0d6efd 0%, #071428 70%);
+                left: -30%;
+                transform: translate3d(-120%,0,0) rotate(-12deg);
+                border-radius: 22px;
+                transition: transform var(--swipe-duration) var(--ease), opacity 400ms;
+                box-shadow: 0 40px 90px rgba(5,20,40,0.55);
+                pointer-events: none;
+            }
+            .page-swipe.active .swipe-panel {
+                transform: translate3d(0,0,0) rotate(-12deg);
+            }
+
+            /* 中央 logo 容器（圆角） */
+            .page-swipe .swipe-logo {
+                position: relative;
+                z-index: 100000;
+                width: 140px;
+                height: 140px;
+                border-radius: 18px;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(255,255,255,0.04);
+                box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+                opacity: 0;
+                transform: scale(0.92);
+                transition: opacity 420ms ease, transform 420ms cubic-bezier(.2,.8,.2,1);
+            }
+            .page-swipe.active .swipe-logo {
+                opacity: 1;
+                transform: scale(1);
+            }
+            .page-swipe .swipe-logo img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display:block;
+            }
         </style>
     </head>
     <body>
@@ -852,14 +913,14 @@
                 background: linear-gradient(135deg, #0d6efd 0%, #071428 70%);
                 /* 通过 left/right 控制，避免在某些浏览器触发布局溢出 */
                 left: -30%;
-                transform: translateX(0) rotate(-12deg);
+                transform: translate3d(-120%,0,0) rotate(-12deg);
                 border-radius: 22px;
-                transition: transform 700ms cubic-bezier(.2,.9,.25,1), opacity 400ms;
+                transition: transform var(--swipe-duration) var(--ease), opacity 400ms;
                 box-shadow: 0 40px 90px rgba(5,20,40,0.55);
                 pointer-events: none;
             }
             .page-swipe.active .swipe-panel {
-                transform: translateX(0) rotate(-12deg);
+                transform: translate3d(0,0,0) rotate(-12deg);
             }
 
             /* 中央 logo 容器（圆角） */
@@ -904,7 +965,7 @@
 
         <script>
             (function(){
-                const TRANSITION_MS = 800; // 面板滑满屏所需时间，单位 ms
+                const TRANSITION_MS = 700; // 与 index 保持一致
                 const swipeEl = document.getElementById('pageSwipe');
 
                 function ensureVisible() {
@@ -927,14 +988,17 @@
                     ensureVisible();
                     // 小延时确保样式已应用
                     requestAnimationFrame(() => {
+                        // 强制下一帧再触发 class，降低抖动
                         swipeEl.classList.add('active');
                         swipeEl.setAttribute('aria-hidden','false');
                     });
 
                     // 等待滑满屏（移除切开阶段，直接导航）
-                    await new Promise(r => setTimeout(r, TRANSITION_MS));
+                    await new Promise(r => setTimeout(r, TRANSITION_MS + 40)); // + small buffer
 
                     // 最终导航
+                    // 标记：告知目标主页在下一次加载时播放入口切开动画
+                    try { sessionStorage.setItem('playEntryOnNextLoad', '1'); } catch(e) {}
                     window.location.href = href;
                 }
 

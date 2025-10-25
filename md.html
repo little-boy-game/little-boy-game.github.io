@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>鸣谢名单</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <style>
+            :root{
+                --swipe-duration: 700ms;
+                --entry-duration: 1000ms;
+            }
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f0f0f0;
+            }
+            .container {
+                max-width: 800px;
+                margin: 50px auto;
+                padding: 20px;
+                background-color: #fff;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            }
+            h1 { color: #4CAF50; }
+            .th { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+            .th2 {
+                padding: 10px 15px;
+                background-color: #e7f3e7;
+                border: 1px solid #4CAF50;
+                border-radius: 5px;
+                text-decoration: none;
+                color: #4CAF50;
+                font-weight: bold;
+                transition: background-color 0.3s, color 0.3s;
+            }
+            .th2:hover { background-color: #4CAF50; color: #fff; }
+
+            /* markdown 渲染样式 */
+            .md-content { color:#222; line-height:1.7; }
+            .md-content h1,.md-content h2 { color:#103c12; }
+            .md-content pre { background:#0b0b0b; color:#f8f8f2; padding:12px; border-radius:8px; overflow:auto; }
+            .md-content code { background:#f4f4f4; padding:2px 6px; border-radius:6px; font-family:monospace; }
+            .md-content img { max-width:100%; height:auto; display:block; margin:10px 0; border-radius:6px; }
+        </style>
+
+        <!-- 预连接 CDN 提速（减少 DNS/TCP 握手） -->
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+        <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+        <!-- 可预加载常用图片以避免首次渲染闪烁（如有 logo） -->
+        <link rel="preload" href="assets/images/entry-logo.png" as="image">
+        <!-- EXTERNAL SCRIPTS: 移至 body 底部并使用 defer（不阻塞首屏） -->
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="green">鸣谢名单</h1>
+
+            <div class="th">
+                <a href="index.html" class="qblue th2" data-transition="swipe" ><i class="fa-solid fa-house"></i> 返回主页</a>
+            </div>
+
+            <!-- md 渲染容器 -->
+            <div id="mdContainer" class="md-content" aria-live="polite">
+                <!-- ...existing code... -->
+                <p>正在加载名单……</p>
+                <!-- ...existing code... -->
+            </div>
+        </div>
+
+        <!-- 将外部 lib 放到文档尾部并使用 defer，以免阻塞渲染 -->
+        <script>
+            (function () {
+                const candidates = ['名单.md','credits.md','list.md'];
+                const out = document.getElementById('mdContainer');
+                const CACHE_TTL = 24 * 60 * 60 * 1000; // 本地缓存 24 小时
+
+                function showMsg(html, level = 'warn') {
+                    out.innerHTML = `<div style="color:${level==='err'?'#b33':'#b86'};margin:14px 0">${html}</div>`;
+                    console[level === 'err' ? 'error' : 'warn'](html);
+                }
+
+                function loadScript(src, timeout = 7000) {
+                    return new Promise((resolve, reject) => {
+                        const s = document.createElement('script');
+                        let done = false;
+                        s.src = src;
+                        s.async = true;
+                        s.onload = () => { if (!done) { done = true; resolve(); } };
+                        s.onerror = () => { if (!done) { done = true; reject(new Error('load failed: ' + src)); } };
+                        document.head.appendChild(s);
+                        setTimeout(() => { if (!done) { done = true; reject(new Error('timeout: ' + src)); } }, timeout);
+                    });
+                }
+
+                // 简单且相对安全的 Markdown -> HTML 回退解析器（支持常见语法）
+                function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+                function simpleMdToHtml(md) {
+                    // 处理代码块 ``` ... ```
+                    let codeBlocks = [];
+                    md = md.replace(/```([\s\S]*?)```/g, (m, p1) => {
+                        const idx = codeBlocks.push(escapeHtml(p1)) - 1;
+                        return `\n@@CODEBLOCK${idx}@@\n`;
+                    });
+
+                    // 行处理
+                    const lines = md.split(/\r?\n/);
+                    let html = '';
+                    let inList = false;
+                    lines.forEach(line => {
+                        // ul list
+                        if (/^\s*[-*+]\s+/.test(line)) {
+                            if (!inList) { inList = true; html += '<ul>'; }
+                            const item = line.replace(/^\s*[-*+]\s+/, '');
+                            html += '<li>' + inlineTransform(item) + '</li>';
+                            return;
+                        } else {
+                            if (inList) { html += '</ul>'; inList = false; }
+                        }
+
+                        // headings
+                        const h = line.match(/^(#{1,6})\s+(.*)/);
+                        if (h) { html += `<h${h[1].length}>` + inlineTransform(h[2]) + `</h${h[1].length}>`; return; }
+
+                        // horizontal rule
+                        if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) { html += '<hr/>'; return; }
+
+                        // empty line -> paragraph gap
+                        if (/^\s*$/.test(line)) { html += ''; return; }
+
+                        // paragraph
+                        html += `<p>${inlineTransform(line)}</p>`;
+                    });
+
+                    if (inList) html += '</ul>';
+
+                    // 恢复代码块
+                    html = html.replace(/@@CODEBLOCK(\d+)@@/g, (m, idx) => {
+                        const code = codeBlocks[Number(idx)] || '';
+                        return `<pre><code>${code}</code></pre>`;
+                    });
+
+                    return html;
+
+                    // 行内转换：图片、链接、bold, italic, inline code
+                    function inlineTransform(text) {
+                        text = escapeHtml(text);
+                        // images ![alt](url)
+                        text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (m, alt, url) => {
+                            return `<img src="${escapeAttr(url)}" alt="${escapeAttr(alt)}">`;
+                        });
+                        // links [text](url)
+                        text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, t, u) => `<a href="${escapeAttr(u)}" target="_blank" rel="nofollow noopener noreferrer">${t}</a>`);
+                        // inline code `code`
+                        text = text.replace(/`([^`]+)`/g, (m, c) => `<code>${escapeHtml(c)}</code>`);
+                        // bold **text**
+                        text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                        // italic *text*
+                        text = text.replace(/(^|[^*])\*([^*]+)\*([^*]|$)/g, (m,a,b,c) => `${a}<em>${b}</em>${c}`);
+                        return text;
+                    }
+
+                    function escapeAttr(s){ return s.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+                }
+
+                function renderMarkdown(md) {
+                    const job = () => {
+                        try {
+                            // 若 marked+DOMPurify 可用，优先使用
+                            if (window.marked && window.DOMPurify) {
+                                const html = window.marked.parse(md || '');
+                                out.innerHTML = window.DOMPurify.sanitize(html);
+                            } else {
+                                // 回退解析器，输出仅包含受限标签
+                                out.innerHTML = simpleMdToHtml(md || '');
+                            }
+                            out.querySelectorAll('img').forEach(img => { img.loading = 'lazy'; img.decoding = 'async'; img.style.maxWidth = '100%'; });
+                        } catch (e) {
+                            showMsg('渲染失败：' + (e && e.message || e), 'err');
+                        }
+                    };
+                    if ('requestIdleCallback' in window) requestIdleCallback(job, { timeout: 500 });
+                    else setTimeout(job, 50);
+                }
+
+                async function loadWithLocalCache(name) {
+                    const key = 'mdCache:' + name;
+                    try {
+                        const raw = localStorage.getItem(key);
+                        if (raw) {
+                            const obj = JSON.parse(raw);
+                            if (obj && Date.now() - obj.t < CACHE_TTL) {
+                                renderMarkdown(obj.md);
+                                return true;
+                            }
+                        }
+                    } catch (e) { /* ignore */ }
+
+                    try {
+                        const res = await fetch(name, { cache: 'force-cache' });
+                        if (!res.ok) return false;
+                        const text = await res.text();
+                        try { localStorage.setItem(key, JSON.stringify({ t: Date.now(), md: text })); } catch(e){}
+                        renderMarkdown(text);
+                        return true;
+                    } catch (e) {
+                        return false;
+                    }
+                }
+
+                async function tryLoadAll() {
+                    if (location.protocol === 'file:') {
+                        showMsg('检测到 file:// 协议。请使用本地 HTTP 服务器（例如：python -m http.server 或 VSCode Live Server），然后使用 http://localhost:8000/ 打开页面。', 'err');
+                        return;
+                    }
+
+                    for (const name of candidates) {
+                        const ok = await loadWithLocalCache(name);
+                        if (ok) return;
+                    }
+                    showMsg('未找到名单文件。请把 Markdown 文件放在本目录并命名为 <code>名单.md</code> 或 <code>credits.md</code>。', 'err');
+                }
+
+                // 主流程：尝试加载 CDN 库，失败则回退到本地解析器
+                window.addEventListener('load', async () => {
+                    let libsLoaded = true;
+                    try {
+                        // 尝试加载 marked + DOMPurify（并行）
+                        await Promise.allSettled([
+                            window.marked ? Promise.resolve() : loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js'),
+                            window.DOMPurify ? Promise.resolve() : loadScript('https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js')
+                        ]).then(results => {
+                            results.forEach(r => { if (r.status === 'rejected') libsLoaded = false; });
+                        });
+                        if (!libsLoaded) throw new Error('部分库加载失败或超时，使用内置解析器');
+                    } catch (e) {
+                        showMsg('第三方库加载失败，正在使用内置解析器渲染（可离线使用）。', 'warn');
+                    }
+                    try {
+                        await tryLoadAll();
+                    } catch (e) {
+                        showMsg('加载失败：' + (e && e.message || e), 'err');
+                        console.error(e);
+                    }
+                }, { once: true });
+            })();
+        </script>
+    </body>
+</html>
