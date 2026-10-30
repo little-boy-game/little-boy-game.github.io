@@ -1,162 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
     <head>
         <meta charset="UTF-8" />
         <title>little boy game</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <style>
-            :root{
-                --swipe-duration: 700ms;
-                --logo-show: 420ms;
-                --logo-hold: 500ms;
-                --logo-cut: 420ms;
-                --ease: cubic-bezier(.2,.9,.25,1);
-            }
-            /* 优化渲染提示 */
-            .entry-swipe, .entry-swipe .panel, .page-swipe, .page-swipe .swipe-panel { will-change: transform, opacity; }
-
-            /* ---------- 全局重置与滚动修复 ---------- */
-            * { margin:0; padding:0; box-sizing:border-box; font-family: Arial, Helvetica, sans-serif; }
-            html { overflow-y: scroll; overflow-x: hidden; }
-            body.preload { overflow: hidden; }
-            body.preload > :not(#entrySwipe) { visibility: hidden !important; pointer-events: none !important; }
-            body { overflow-x: hidden; -webkit-overflow-scrolling: touch; background:#071428; color:#fff; line-height:1.5; }
-
-            /* ---------- 导航 / 顶部 ---------- */
-            .top-nav { background:#0d6efd; height:60px; display:flex; align-items:center; padding:0 20px; }
-            .logo { display:flex; gap:10px; align-items:center; }
-            .logo img { height:36px; width:auto; display:block; }
-            .logo span { color:#fff; font-weight:700; }
-
-            /* ---------- 颜色类（蓝色调统一） ---------- */
-            .green { color:#66b0ff; } /* 统一为蓝色调 */
-            .qblue { color:#9be7ff; }
-            .blue { color:#9be7ff; }
-            .break { color:#28d25b; } /* 保留其他类名以免引用断裂 */
-
-            /* ---------- 布局 / 卡片 / 按钮 ---------- */
-            .container { max-width:1100px; margin:0 auto; padding:30px 16px; }
-            .section { padding:60px 0; position:relative; }
-            .section-title { font-size:2.4rem; font-weight:800; text-align:center; margin-bottom:10px; color:#fff; }
-            .section-title span { color:#A7E6FF; display:inline-block; }
-            .section-subtitle { text-align:center; color:rgba(255,255,255,0.8); max-width:800px; margin:12px auto 30px; }
-
-            .features-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap:20px; align-items:start; }
-            .feature-card { background:rgba(6,30,60,0.6); border-radius:12px; padding:22px; border:1px solid rgba(173,216,255,0.06); overflow:hidden; position:relative; }
-            .feature-icon-wrapper { width:72px; height:72px; margin:0 auto 16px; background:linear-gradient(135deg,#3a8af0,#1e90ff); display:flex; align-items:center; justify-content:center; border-radius:12px; }
-            .feature-icon { color:#fff; font-size:22px; }
-            .feature-title { text-align:center; color:#A7E6FF; font-weight:700; margin:10px 0; }
-            .feature-card p { color:rgba(255,255,255,0.9); font-size:0.98rem; line-height:1.6; }
-
-            .glass-card {
-                background: rgba(10, 28, 50, 0.55);
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
-                border: 1px solid rgba(167, 230, 255, 0.06);
-                border-radius: 12px;
-                padding: 22px;
-                box-shadow: 0 12px 30px rgba(30, 144, 255, 0.06);
-                transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-            }
-
-            .th { background:#0b3a66; display:flex; gap:12px; padding:10px; align-items:center; }
-            .th2 {
-                background:#29a3ff;
-                color:#ffffff;
-                border:none;
-                padding:6px 12px;
-                height:30px;
-                border-radius:6px;
-                cursor:pointer;
-                text-decoration:none;
-            }
-
-            /* ---------- 装饰 / 动画 / 视觉稳定 ---------- */
-            .deco-blob { position: absolute; pointer-events: none; filter: blur(18px); opacity: 0.14; transition: transform 0.6s ease, opacity 0.6s ease; }
-            .deco-blob--a { width:220px; height:220px; left:-40px; top:40px; background: radial-gradient(circle at 30% 30%, #29a3ff, #0d6efd 60%); border-radius:50%; }
-            .deco-blob--b { width:320px; height:120px; right:-80px; top:260px; background: linear-gradient(90deg, rgba(167,230,255,0.2), rgba(30,144,255,0.12)); border-radius:60px; }
-
-            .animate-in { opacity:0; transform: translateY(18px) scale(.995); transition: opacity .52s ease, transform .52s cubic-bezier(.2,.9,.25,1); }
-            .animate-in.visible { opacity:1; transform:none; }
-
-            /* ---------- server-list / footer 简单样式 ---------- */
-            .server-item { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-            .server-host { color:#A7E6FF; font-weight:700; }
-            .server-status { min-width:160px; text-align:center; padding:8px 12px; border-radius:8px; background:rgba(255,255,255,0.03); }
-            .server-status.online { background: linear-gradient(90deg,#1ec27f20,#1ec27f30); color:#bfffe3; border:1px solid rgba(46,204,113,0.12); }
-            .server-status.offline { background: linear-gradient(90deg,#e74c3c20,#e74c3c30); color:#ffd2d2; border:1px solid rgba(231,76,60,0.12); }
-
-            /* ---------- 入口动画：中间切开（修复平行四边形切入抖动/位置计算 bug） ---------- */
-            .entry-swipe {
-                position: fixed;
-                inset: 0;
-                z-index: 999999;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                pointer-events: none;      /* 默认不拦截事件 */
-                overflow: hidden;
-                contain: strict;           /* 限制渲染区域，减小重绘范围 */
-            }
-             .entry-swipe.show { pointer-events: auto; } /* 显示时拦截事件，避免用户操作页面 */
-
-            /* 两块覆盖面板：改为基于元素中心定位并用 translate3d 控制位置，避免使用超大 vw 导致不同浏览器计算误差 */
-            .entry-swipe .panel {
-                position: absolute;
-                left: 50%;
-                top: 50%;
-                width: 120vw;               /* 覆盖更大区域但用 translate 控制可视位置 */
-                max-width: 1400px;
-                height: 120vh;
-                transform-origin: center;
-                background: linear-gradient(135deg, #071428 0%, #0d6efd 70%);
-                border-radius: 20px;
-                box-shadow: 0 30px 80px rgba(2,6,23,0.6);
-                transition: transform var(--swipe-duration) var(--ease), opacity 320ms ease;
-                will-change: transform, opacity;
-                /* 把元素中心对齐到视口中心，具体位置通过 translate 控制 */
-                transform: translate3d(-50%, -50%, 0) rotate(-12deg);
-            }
-            /* 初始状态：左右面板分别位于两侧视口之外（相对自己的宽度） */
-            .entry-swipe .panel.left  { transform: translate3d(-170%, -50%, 0) rotate(-12deg); }
-            .entry-swipe .panel.right { transform: translate3d(70%, -50%, 0) rotate(-12deg); }
-            /* 激活状态：两块滑入覆盖中心，形成斜角覆盖（平行四边形） */
-            .entry-swipe.show .panel.left  { transform: translate3d(-10%, -50%, 0) rotate(-12deg); }
-            .entry-swipe.show .panel.right { transform: translate3d(10%, -50%, 0) rotate(-12deg); }
-
-            /* 切开/退出：两侧快速飞出（数值足够大以避免触发横向滚动） */
-            .entry-swipe.cut .panel.left  { transform: translate3d(-260%, -50%, 0) rotate(-12deg); opacity: 0; transition: transform var(--logo-cut) var(--ease), opacity .28s; }
-            .entry-swipe.cut .panel.right { transform: translate3d(200%, -50%, 0) rotate(-12deg);  opacity: 0; transition: transform var(--logo-cut) var(--ease), opacity .28s; }
-
-             /* 中央 logo（圆角） */
-             .entry-swipe .center-logo {
-                 position: relative;
-                 z-index: 1000000;
-                 width: 140px; height: 140px;
-                 border-radius: 18px;
-                 overflow: hidden;
-                 display: flex; align-items: center; justify-content: center;
-                 background: rgba(255,255,255,0.04);
-                 box-shadow: 0 10px 30px rgba(2,6,23,0.6);
-                 opacity: 0; transform: scale(.92);
-                 transition: opacity var(--logo-show) var(--ease), transform var(--logo-show) var(--ease);
-             }
-             .entry-swipe.show .center-logo { opacity:1; transform: scale(1); }
-             .entry-swipe .center-logo img {
-                 width: 100%;
-                 height: 100%;
-                 object-fit: contain;
-                 display:block;
-                 padding: 6px;
-                 background: transparent;
-             }
-
-            /* 响应 */
-             @media (max-width:640px) {
-                 .entry-swipe .center-logo { width:110px; height:110px; border-radius:12px; }
-                .entry-swipe .panel { width:140vw; left:50%; top:50%; }
-             }
-        </style>
+        <!-- 公共样式 + 蓝色主题变量 -->
+        <link rel="stylesheet" href="style.css">
     </head>
 
     <!-- 初始添加 preload 类，确保页面不先闪烁内容 -->
@@ -180,9 +29,12 @@
               <h3>游戏：</h3>
                 <div class="th">
 
-                  <a href="LittleBoyServer.html" class="qblue th2" data-transition="swipe" >little boy 服务器组  <i class="fa-solid fa-gamepad"></i></a>
+                  <a href="LittleBoyServer.html" class="qblue th2" data-transition="swipe" >LittleBoyServer  <i class="fa-solid fa-gamepad"></i></a>
                   <a href="md.html" class="qblue th2" data-transition="swipe" >鸣谢名单  <i class="fa-solid fa-leaf"></i></a>
+                  
+                  
                 </div>
+              
             </div>
             <div class="section-subtitle">
               <h3>校内：</h3>
@@ -191,7 +43,17 @@
                     <a href="b_xw.html" class="qblue th2" data-transition="swipe" >班内新闻  <i class="fa-regular fa-newspaper"></i></a>
                 </div>
             </div>
+
+            <div class="section-subtitle">
+              <h3>视频：</h3>
+                <div class="th">
+                    <a href="https://www.douyin.com/user/MS4wLjABAAAA2XPMZfN6rg-jIC4Y_Vp4bTWL-of3L177qS1rMS93H3rAQtoudAZlFkGRpX8Fd1kT?from_tab_name=main&vid=7556912634256198954" class="qblue th2" data-transition="swipe" >抖音  <i class="fa-solid fa-landmark"></i></a>
+                    <a href="https://space.bilibili.com/3546653019605872" class="qblue th2" data-transition="swipe" >哔哩哔哩  <i class="fa-regular fa-newspaper"></i></a>
+                </div>
+            </div>
         </div>
+
+        
 
         <!-- 入口动画覆盖层 -->
         <div id="entrySwipe" class="entry-swipe" aria-hidden="true" style="display:none">
@@ -269,4 +131,3 @@
         </script>
     </body>
 </html>
-

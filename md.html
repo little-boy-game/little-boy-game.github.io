@@ -1,48 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
     <head>
         <meta charset="UTF-8" />
         <title>鸣谢名单</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <style>
-            :root{
-                --swipe-duration: 700ms;
-                --entry-duration: 1000ms;
-            }
-            body {
-                font-family: Arial, sans-serif;
-                margin: 0;
-                padding: 0;
-                background-color: #f0f0f0;
-            }
-            .container {
-                max-width: 800px;
-                margin: 50px auto;
-                padding: 20px;
-                background-color: #fff;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            }
-            h1 { color: #4CAF50; }
-            .th { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
-            .th2 {
-                padding: 10px 15px;
-                background-color: #e7f3e7;
-                border: 1px solid #4CAF50;
-                border-radius: 5px;
-                text-decoration: none;
-                color: #4CAF50;
-                font-weight: bold;
-                transition: background-color 0.3s, color 0.3s;
-            }
-            .th2:hover { background-color: #4CAF50; color: #fff; }
-
-            /* markdown 渲染样式 */
-            .md-content { color:#222; line-height:1.7; }
-            .md-content h1,.md-content h2 { color:#103c12; }
-            .md-content pre { background:#0b0b0b; color:#f8f8f2; padding:12px; border-radius:8px; overflow:auto; }
-            .md-content code { background:#f4f4f4; padding:2px 6px; border-radius:6px; font-family:monospace; }
-            .md-content img { max-width:100%; height:auto; display:block; margin:10px 0; border-radius:6px; }
-        </style>
+        <link rel="stylesheet" href="style.css">
 
         <!-- 预连接 CDN 提速（减少 DNS/TCP 握手） -->
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -327,7 +289,11 @@
                 } catch (e) {}
             })();
 
-            // 插入刷新按钮（手动强制刷新）
+            tryLoadAll().catch(e => console.error(e));
+
+        })();
+        </script>
+        <!--// 插入刷新按钮（手动强制刷新）
             (function insertRefresh() {
                 try {
                     const container = document.querySelector('.container');
@@ -367,9 +333,7 @@
             })();
 
             // 立即触发加载（stale-while-revalidate：先用缓存，背景取最新）
-            tryLoadAll().catch(e => console.error(e));
+            tryLoadAll().catch(e => console.error(e)); -->
 
-        })();
-        </script>
     </body>
 </html>
